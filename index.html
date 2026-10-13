@@ -33,7 +33,7 @@
     .btn-icon { background: #334155; color: #cbd5e1; border: none; border-radius: 50%; width: 34px; height: 34px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
     .btn-icon:hover { background: #475569; }
 
-    /* TARJETA DE INSTALACIÓN RÁPIDA */
+    /* BANNER DE INSTALACIÓN */
     .install-banner {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: white;
@@ -58,7 +58,6 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    .btn-install:active { background: #e2e8f0; }
 
     /* BARRA LATERAL (SIDEBAR) */
     .sidebar {
@@ -92,13 +91,10 @@
       font-weight: 500;
       font-size: 14px;
       transition: background 0.2s;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
     .sidebar-menu-btn:hover, .sidebar-menu-btn.active { background: #3b82f6; color: white; }
     
-    .btn-add-cat {
+    .btn-add-period {
       background: #10b981;
       color: white;
       border: none;
@@ -113,7 +109,7 @@
       gap: 6px;
       margin-top: 5px;
     }
-    .btn-add-cat:hover { background: #059669; }
+    .btn-add-period:hover { background: #059669; }
 
     .overlay {
       display: none;
@@ -140,7 +136,13 @@
     
     ul { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
     li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #334155; color: #e2e8f0; }
-    .btn-del { background: none; border: none; color: #f87171; font-size: 14px; cursor: pointer; padding: 4px 8px; }
+    
+    /* Botones de acción en cada fila */
+    .item-actions { display: flex; gap: 4px; align-items: center; }
+    .btn-action { background: none; border: none; font-size: 14px; cursor: pointer; padding: 4px 6px; border-radius: 4px; }
+    .btn-edit { color: #38bdf8; }
+    .btn-del { color: #f87171; }
+    .btn-action:hover { background: #334155; }
 
     #filtroTitulo { font-size: 13px; color: #38bdf8; margin-bottom: 10px; font-weight: 500; }
 
@@ -172,25 +174,24 @@
 
 <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
-<!-- MENÚ LATERAL (SIDEBAR) -->
+<!-- MENÚ LATERAL -->
 <div id="sidebar" class="sidebar">
   <div class="sidebar-header">
-    <h3>📂 Organizar Gastos</h3>
+    <h3>📅 Organización</h3>
     <button class="btn-icon" onclick="toggleSidebar()" style="width: 28px; height: 28px; font-size: 12px;">✕</button>
   </div>
   
-  <button class="sidebar-menu-btn active" onclick="filtrarGastos('todos', 'Mostrando: Todos los gastos', this)">📋 Ver Todos</button>
-  <button class="sidebar-menu-btn" onclick="filtrarGastos('mes_actual', 'Mostrando: Mes Actual', this)">📅 Este Mes</button>
+  <button class="sidebar-menu-btn active" onclick="filtrarPorPeriodo('todos', 'Mostrando: Todos los gastos', this)">📋 Ver Todos</button>
+  <button class="sidebar-menu-btn" onclick="filtrarPorPeriodo('mes_actual', 'Mostrando: Este Mes', this)">📆 Mes Actual</button>
+  <button class="sidebar-menu-btn" onclick="filtrarPorPeriodo('anio_actual', 'Mostrando: Este Año', this)">🎆 Año Actual</button>
   
   <hr style="border: 0; border-top: 1px solid #334155; margin: 2px 0;">
   
-  <div style="display: flex; justify-content: space-between; align-items: center;">
-    <span style="font-size: 12px; color: #94a3b8;">Categorías:</span>
-  </div>
+  <span style="font-size: 12px; color: #94a3b8;">Historial de Periodos:</span>
 
-  <div id="listaCategoriasSidebar" style="display: flex; flex-direction: column; gap: 8px;"></div>
+  <div id="listaPeriodosSidebar" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
-  <button class="btn-add-cat" onclick="crearNuevaCategoria()">➕ Nueva Categoría</button>
+  <button class="btn-add-period" onclick="agregarNuevoPeriodo()">➕ Filtrar por Mes/Año</button>
   
   <hr style="border: 0; border-top: 1px solid #334155; margin: 5px 0;">
   <button class="sidebar-menu-btn" onclick="mostrarInstruccionesInstalacion()" style="background: #2563eb; color: white;">📲 Instalar en Celular / PC</button>
@@ -207,7 +208,6 @@
     </div>
   </div>
 
-  <!-- BANNER DE INSTALACIÓN DINÁMICO (Sólo aparece si no está instalada) -->
   <div id="bannerInstalar" class="install-banner" style="display: none;">
     <div class="install-banner-text">
       <strong>📲 ¿Usar como App?</strong>
@@ -229,7 +229,7 @@
 
   <form id="gastoForm">
     <input type="number" step="0.01" id="monto" placeholder="Monto (C$)" required>
-    <select id="categoria"></select>
+    <select id="categoria" onchange="verificarNuevaCategoria(this)"></select>
     <button type="submit">+ Registrar Gasto</button>
   </form>
 
@@ -238,12 +238,14 @@
   <ul id="listaGastos"></ul>
 </div>
 
-<!-- Ventana Emergente de Ayuda / Instrucciones de Instalación -->
+<!-- Ventana Emergente de Ayuda -->
 <div id="modalAyuda" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 2000;">
   <div style="background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid #334155;">
-    <h3 id="modalTitulo" style="margin-top: 0; color: #f8fafc;">¿Cómo instalar esta App?</h3>
+    <h3 id="modalTitulo" style="margin-top: 0; color: #f8fafc;">¿Cómo funciona?</h3>
     <p id="modalTexto" style="color: #94a3b8; font-size: 14px; line-height: 1.5;">
-      Puedes instalar esta microapp directamente en tu dispositivo sin ir a la tienda de aplicaciones.
+      • <strong>Modificar / Eliminar:</strong> Toca el lápiz (✏️) para editar un gasto o la equis (✕) para eliminarlo.<br><br>
+      • <strong>Categorías:</strong> Elige o crea categorías desde el menú desplegable al registrar un gasto.<br><br>
+      • <strong>Organización (☰):</strong> Filtra tus registros por mes o por año.
     </p>
     <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
   </div>
@@ -256,26 +258,22 @@
 
 <script>
   let gastos = JSON.parse(localStorage.getItem('mis_gastos')) || [];
-  let categoriasDefecto = [
-    { id: 'Comida', nombre: '🍔 Comida' },
-    { id: 'Transporte', nombre: '🚌 Transporte' },
-    { id: 'Servicios', nombre: '💡 Servicios' },
-    { id: 'Varios', nombre: '📦 Varios' }
-  ];
+  let categoriasDefecto = ['🍔 Comida', '🚌 Transporte', '💡 Servicios', '📦 Varios'];
   let categorias = JSON.parse(localStorage.getItem('mis_categorias')) || categoriasDefecto;
-  let filtroActual = 'todos';
+  
+  let periodosGuardados = JSON.parse(localStorage.getItem('mis_periodos')) || [];
+  let filtroPeriodo = 'todos'; 
   let deferredPrompt = null;
 
   const form = document.getElementById('gastoForm');
   const lista = document.getElementById('listaGastos');
   const selectCat = document.getElementById('categoria');
-  const containerCatSidebar = document.getElementById('listaCategoriasSidebar');
+  const containerPeriodosSidebar = document.getElementById('listaPeriodosSidebar');
 
-  // LÓGICA DE INSTALACIÓN PWA
+  // INSTALACIÓN
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    // Mostrar el banner dinámico arriba de las tarjetas
     document.getElementById('bannerInstalar').style.display = 'flex';
   });
 
@@ -296,51 +294,75 @@
   function mostrarInstruccionesInstalacion() {
     const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const esiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
     document.getElementById('modalTitulo').innerText = '📲 Cómo instalar la App';
-    
     if (esiOS) {
-      document.getElementById('modalTexto').innerHTML = '<strong>En iPhone / iPad:</strong><br>1. Toca el botón <strong>Compartir</strong> (cuadrado con flecha hacia arriba) en Safari.<br>2. Selecciona <strong>"Agregar a la pantalla de inicio"</strong>.';
+      document.getElementById('modalTexto').innerHTML = '<strong>En iPhone / iPad:</strong><br>1. Toca <strong>Compartir</strong> en Safari.<br>2. Elige <strong>"Agregar a la pantalla de inicio"</strong>.';
     } else if (esMovil) {
-      document.getElementById('modalTexto').innerHTML = '<strong>En Android:</strong><br>1. Toca los <strong>3 puntos</strong> arriba a la derecha en Chrome.<br>2. Elige <strong>"Instalar aplicación"</strong> o "Agregar a pantalla principal".';
+      document.getElementById('modalTexto').innerHTML = '<strong>En Android:</strong><br>1. Toca los <strong>3 puntos</strong> en Chrome.<br>2. Elige <strong>"Instalar aplicación"</strong>.';
     } else {
-      document.getElementById('modalTexto').innerHTML = '<strong>En PC / Computadora:</strong><br>1. Busca el ícono de <strong>Instalar app</strong> (un monitor con una flecha) en la barra de dirección del navegador (arriba a la derecha).<br>2. O abre esta web en tu celular para instalarla ahí directamente.';
+      document.getElementById('modalTexto').innerHTML = '<strong>En PC:</strong><br>1. Haz clic en el icono de instalar en la barra superior del navegador.<br>2. O abre la app desde tu celular.';
     }
-    
-    const modal = document.getElementById('modalAyuda');
-    modal.style.display = 'flex';
+    document.getElementById('modalAyuda').style.display = 'flex';
   }
 
-  function renderizarCategorias() {
+  // CATEGORÍAS
+  function renderizarCategoriasSelect() {
     selectCat.innerHTML = '';
     categorias.forEach(cat => {
       const option = document.createElement('option');
-      option.value = cat.id;
-      option.innerText = cat.nombre;
+      option.value = cat;
+      option.innerText = cat;
       selectCat.appendChild(option);
     });
 
-    containerCatSidebar.innerHTML = '';
-    categorias.forEach(cat => {
+    const optionCrear = document.createElement('option');
+    optionCrear.value = '__NUEVA__';
+    optionCrear.innerText = '➕ Agregar nueva categoría...';
+    optionCrear.style.fontWeight = 'bold';
+    optionCrear.style.color = '#38bdf8';
+    selectCat.appendChild(optionCrear);
+  }
+
+  function verificarNuevaCategoria(selectElement) {
+    if (selectElement.value === '__NUEVA__') {
+      const nuevaCat = prompt('Escribe el nombre de la nueva categoría (puedes agregar un emoji):');
+      if (nuevaCat && nuevaCat.trim() !== '') {
+        const nombreLimpio = nuevaCat.trim();
+        if (!categorias.includes(nombreLimpio)) {
+          categorias.push(nombreLimpio);
+          localStorage.setItem('mis_categorias', JSON.stringify(categorias));
+        }
+        renderizarCategoriasSelect();
+        selectCat.value = nombreLimpio;
+      } else {
+        selectCat.selectedIndex = 0;
+      }
+    }
+  }
+
+  // PERIODOS
+  function renderizarPeriodosSidebar() {
+    containerPeriodosSidebar.innerHTML = '';
+    periodosGuardados.forEach(per => {
       const btn = document.createElement('button');
       btn.className = 'sidebar-menu-btn';
-      btn.innerText = cat.nombre;
-      btn.onclick = (e) => filtrarGastos(cat.id, `Categoría: ${cat.nombre}`, e.target);
-      containerCatSidebar.appendChild(btn);
+      btn.innerText = `📂 ${per.nombre}`;
+      btn.onclick = (e) => filtrarPorPeriodo(per.key, `Periodo: ${per.nombre}`, e.target);
+      containerPeriodosSidebar.appendChild(btn);
     });
   }
 
-  function crearNuevaCategoria() {
-    const nombreCat = prompt('Escribe el nombre de la nueva categoría (puedes agregar un emoji al inicio):');
-    if (nombreCat && nombreCat.trim() !== '') {
-      const nuevaCat = {
-        id: nombreCat.trim(),
-        nombre: nombreCat.trim()
-      };
-      categorias.push(nuevaCat);
-      localStorage.setItem('mis_categorias', JSON.stringify(categorias));
-      renderizarCategorias();
-      alert(`Categoría "${nombreCat}" agregada con éxito.`);
+  function agregarNuevoPeriodo() {
+    const inputMes = prompt('Escribe el mes y año que quieres organizar (Ejemplo: Octubre 2026, 2025, etc.):');
+    if (inputMes && inputMes.trim() !== '') {
+      const nombreLimpio = inputMes.trim();
+      const nuevoKey = 'p_' + nombreLimpio.toLowerCase().replace(/\s+/g, '_');
+      
+      if (!periodosGuardados.some(p => p.key === nuevoKey)) {
+        periodosGuardados.push({ key: nuevoKey, nombre: nombreLimpio });
+        localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
+        renderizarPeriodosSidebar();
+      }
     }
   }
 
@@ -360,10 +382,18 @@
 
     let gastosFiltrados = gastos.filter(gasto => {
       const gFecha = new Date(gasto.fecha);
-      if (filtroActual === 'mes_actual') {
+      if (filtroPeriodo === 'mes_actual') {
         return gFecha.getMonth() === mesActual && gFecha.getFullYear() === anioActual;
-      } else if (filtroActual !== 'todos') {
-        return gasto.categoria === filtroActual;
+      } else if (filtroPeriodo === 'anio_actual') {
+        return gFecha.getFullYear() === anioActual;
+      } else if (filtroPeriodo !== 'todos') {
+        const periodoObj = periodosGuardados.find(p => p.key === filtroPeriodo);
+        if (periodoObj) {
+          const texto = periodoObj.nombre.toLowerCase();
+          const mesTexto = gFecha.toLocaleString('es-ES', { month: 'long' }).toLowerCase();
+          const anioTexto = gFecha.getFullYear().toString();
+          return texto.includes(mesTexto) || texto.includes(anioTexto);
+        }
       }
       return true;
     });
@@ -386,7 +416,10 @@
           <strong style="color: #f8fafc">${gasto.categoria}</strong> - <span style="color: #38bdf8">C$${gasto.monto.toFixed(2)}</span><br>
           <small style="color:#64748b">${new Date(gasto.fecha).toLocaleDateString()} ${new Date(gasto.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
         </div>
-        <button class="btn-del" onclick="eliminarGasto(${realIndex})">✕</button>
+        <div class="item-actions">
+          <button class="btn-action btn-edit" onclick="editarGasto(${realIndex})" title="Editar">✏️</button>
+          <button class="btn-action btn-del" onclick="eliminarGasto(${realIndex})" title="Eliminar">✕</button>
+        </div>
       `;
       lista.appendChild(li);
     });
@@ -400,16 +433,30 @@
     const monto = parseFloat(document.getElementById('monto').value);
     const categoria = document.getElementById('categoria').value;
 
-    if (monto > 0) {
+    if (monto > 0 && categoria !== '__NUEVA__') {
       gastos.push({ monto, categoria, fecha: new Date().toISOString() });
       document.getElementById('monto').value = '';
       guardarYRenderear();
     }
   });
 
+  // MODIFICAR UN GASTO
+  function editarGasto(index) {
+    const gastoActual = gastos[index];
+    const nuevoMonto = prompt(`Modificar monto para "${gastoActual.categoria}":`, gastoActual.monto);
+    
+    if (nuevoMonto !== null && !isNaN(parseFloat(nuevoMonto)) && parseFloat(nuevoMonto) > 0) {
+      gastos[index].monto = parseFloat(nuevoMonto);
+      guardarYRenderear();
+    }
+  }
+
+  // ELIMINAR UN GASTO
   function eliminarGasto(index) {
-    gastos.splice(index, 1);
-    guardarYRenderear();
+    if (confirm('¿Seguro que deseas eliminar este registro?')) {
+      gastos.splice(index, 1);
+      guardarYRenderear();
+    }
   }
 
   function toggleSidebar() {
@@ -417,8 +464,8 @@
     document.getElementById('overlay').classList.toggle('active');
   }
 
-  function filtrarGastos(criterio, textoTitulo, elementoBtn) {
-    filtroActual = criterio;
+  function filtrarPorPeriodo(criterio, textoTitulo, elementoBtn) {
+    filtroPeriodo = criterio;
     document.getElementById('filtroTitulo').innerText = textoTitulo;
     
     document.querySelectorAll('.sidebar-menu-btn').forEach(btn => btn.classList.remove('active'));
@@ -429,8 +476,8 @@
   }
 
   function toggleAyuda() {
-    document.getElementById('modalTitulo').innerText = '¿Para qué sirve esta app?';
-    document.getElementById('modalTexto').innerHTML = 'Esta es tu microapp de control financiero rápido. Te permite registrar tus gastos diarios y mensuales al instante en córdobas (C$), de forma local y privada en tu dispositivo.';
+    document.getElementById('modalTitulo').innerText = '¿Cómo funciona?';
+    document.getElementById('modalTexto').innerHTML = '• <strong>Modificar / Eliminar:</strong> Toca el lápiz (✏️) para editar un gasto o la equis (✕) para eliminarlo.<br><br>• <strong>Categorías:</strong> Elige o crea categorías desde el menú desplegable al registrar un gasto.<br><br>• <strong>Organización (☰):</strong> Filtra tus registros por mes o por año.';
     const modal = document.getElementById('modalAyuda');
     modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
   }
@@ -442,7 +489,8 @@
     }
   }
 
-  renderizarCategorias();
+  renderizarCategoriasSelect();
+  renderizarPeriodosSidebar();
   actualizarVista();
 </script>
 
