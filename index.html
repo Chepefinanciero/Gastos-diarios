@@ -50,23 +50,24 @@
     }
     .select-moneda:focus { outline: none; border-color: #3b82f6; }
 
-    /* BOTÓN DE AYUDA HERO */
-    .btn-ayuda-hero {
+    /* BOTÓN DE AYUDA COMPACTO */
+    .btn-ayuda-compact {
       background: linear-gradient(135deg, #3b82f6, #1d4ed8);
       color: white;
       border: none;
-      padding: 6px 12px;
-      border-radius: 20px;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
       font-weight: bold;
-      font-size: 13px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 5px;
-      box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
       transition: transform 0.2s;
     }
-    .btn-ayuda-hero:active { transform: scale(0.95); }
+    .btn-ayuda-compact:active { transform: scale(0.92); }
 
     /* BANNER DE INSTALACIÓN */
     .install-banner {
@@ -350,9 +351,8 @@
         <option value="$">$ (USD)</option>
         <option value="€">€ (EUR)</option>
       </select>
-      <button class="btn-ayuda-hero" onclick="togglePaginaAyuda()">
-        <span>?</span> Ayuda
-      </button>
+      <!-- BOTÓN DE AYUDA COMPACTO -->
+      <button class="btn-ayuda-compact" onclick="togglePaginaAyuda()" title="Centro de Ayuda">?</button>
     </div>
   </div>
 
@@ -441,7 +441,7 @@
       <p>Exporta tu historial completo a Excel (CSV) o crea copias de seguridad (JSON) desde el menú lateral para mayor seguridad.</p>
     </div>
 
-    <button onclick="togglePaginaAyuda()" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">Volver a la App</button>
+    <button onclick="togglePaginaAyuda()" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">Volver al Control</button>
   </div>
 </div>
 
@@ -495,7 +495,6 @@
   const containerPeriodosSidebar = document.getElementById('listaPeriodosSidebar');
   const monedaSelect = document.getElementById('monedaSelect');
 
-  // Inicializar selector de moneda con el valor guardado
   monedaSelect.value = monedaActual;
   document.getElementById('monto').placeholder = `Monto en (${monedaActual})`;
 
@@ -506,7 +505,6 @@
     actualizarVista();
   }
 
-  // DETECTAR MODO APP INSTALADA
   function verificarModoAppInstalada() {
     const esPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     if (esPWA) {
