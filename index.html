@@ -57,7 +57,10 @@
 <body>
 
 <div class="app">
-  <h2>Control Express</h2>
+  <h2>Control Express</h2><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h2 style="margin: 0;">Control Express</h2>
+    <button onclick="toggleAyuda()" style="background: #e2e8f0; color: #475569; border: none; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">?</button>
+  </div>
   
   <div class="cards">
     <div class="card">
@@ -84,7 +87,17 @@
   <h3>Historial Reciente</h3>
   <ul id="listaGastos"></ul>
 </div>
-
+  
+<!-- VENTANA DE AYUDA -->
+  <div id="modalAyuda" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000;">
+    <div style="background: white; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <h3 style="margin-top: 0; color: #1e293b;">¿Para qué sirve esta app?</h3>
+      <p style="color: #475569; font-size: 14px; line-height: 1.5;">
+        Esta es tu microapp de control financiero rápido. Te permite registrar tus gastos diarios y mensuales al instante de forma local y privada en tu dispositivo, ayudándote a mantener tus finanzas bajo control sin complicaciones.
+      </p>
+      <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
+    </div>
+  </div>
 <!-- BANNER INFERIOR FIJO -->
 <div class="ad-banner-container">
   <!-- Aquí va el código script de tu proveedor de publicidad (Ej. AdSense) -->
@@ -153,7 +166,18 @@
     gastos.splice(index, 1);
     guardarYRenderear();
   }
+function toggleAyuda() {
+    const modal = document.getElementById('modalAyuda');
+    modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+  }
 
+  // Opcional: Cerrar si hacen clic fuera de la ventana blanca
+  window.onclick = function(event) {
+    const modal = document.getElementById('modalAyuda');
+    if (event.target === modal) {
+      modal.style.display = 'none';
+    }
+  }
   actualizarVista();
 </script>
 
