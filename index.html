@@ -34,7 +34,7 @@
     .header-app { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .header-buttons { display: flex; gap: 6px; align-items: center; }
     
-    .btn-icon { background: #334155; color: #cbd5e1; border: none; border-radius: 50%; width: 34px; height: 34px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .btn-icon { background: #334155; color: #cbd5e1; border: none; border-radius: 50%; width: 34px; height: 34px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
     .btn-icon:hover { background: #475569; }
 
     /* SELECTOR DE MONEDA RÁPIDO */
@@ -50,22 +50,25 @@
     }
     .select-moneda:focus { outline: none; border-color: #3b82f6; }
 
-    /* BOTÓN DE AYUDA COMPACTO */
+    /* BOTÓN DE AYUDA CIRCULAR PERFECTO */
     .btn-ayuda-compact {
       background: linear-gradient(135deg, #3b82f6, #1d4ed8);
       color: white;
       border: none;
       border-radius: 50%;
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      min-height: 32px;
       font-weight: bold;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 15px;
       box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
       transition: transform 0.2s;
+      flex-shrink: 0;
     }
     .btn-ayuda-compact:active { transform: scale(0.92); }
 
@@ -329,6 +332,7 @@
   
   <span style="font-size: 12px; color: #94a3b8;">Ajustes y Exportación:</span>
   <button class="sidebar-menu-btn" onclick="abrirModalPresupuesto()">🎯 Ajustar Presupuesto Mensual</button>
+  <button class="sidebar-menu-btn" onclick="configurarTasaCambio()">💱 Ajustar Tasa de Cambio (1 USD = ? NIO)</button>
   <button class="btn-action-sidebar" onclick="exportarExcel()" style="background: #10b981;">📊 Exportar Historial a Excel (CSV)</button>
   <button class="btn-action-sidebar" onclick="exportarRespaldoJSON()" style="background: #0284c7;">💾 Crear Copia de Seguridad</button>
   <button class="btn-action-sidebar" onclick="document.getElementById('inputRestaurar').click()" style="background: #4f46e5;">📥 Restaurar Copia de Seguridad</button>
@@ -351,7 +355,7 @@
         <option value="$">$ (USD)</option>
         <option value="€">€ (EUR)</option>
       </select>
-      <!-- BOTÓN DE AYUDA COMPACTO -->
+      <!-- BOTÓN DE AYUDA CIRCULAR PERFECTO -->
       <button class="btn-ayuda-compact" onclick="togglePaginaAyuda()" title="Centro de Ayuda">?</button>
     </div>
   </div>
@@ -422,23 +426,18 @@
   </div>
   <div class="help-content">
     <div class="help-card">
-      <h4>💱 Cambio de Moneda</h4>
-      <p>Puedes cambiar el símbolo de tu moneda (Córdobas <strong>C$</strong>, Dólares <strong>$</strong> o Euros <strong>€</strong>) directamente desde el selector ubicado en la esquina superior de la app.</p>
+      <h4>💱 Tasa de Cambio y Conversión</h4>
+      <p>La aplicación guarda internamente todos los montos normalizados en <strong>Córdobas (C$)</strong>. Al cambiar a Dólares ($) o Euros (€), los valores se convierten automáticamente usando la tasa oficial configurada (configurable desde el menú lateral).</p>
     </div>
 
     <div class="help-card">
       <h4>🎯 Presupuesto Mensual</h4>
-      <p>Abre el menú lateral (☰) y selecciona <strong>"Ajustar Presupuesto Mensual"</strong>. La barra superior cambiará de color según lo que vayas consumiendo.</p>
-    </div>
-
-    <div class="help-card">
-      <h4>💳 Registro y Métodos de Pago</h4>
-      <p>Ingresa el monto, elige la categoría y clasifica si pagaste con <strong>Efectivo</strong>, <strong>Tarjeta</strong> o <strong>Transferencia</strong>.</p>
+      <p>Abre el menú lateral (☰) y selecciona <strong>"Ajustar Presupuesto Mensual"</strong> para definir tus metas financieras.</p>
     </div>
 
     <div class="help-card">
       <h4>📊 Exportación y Respaldos</h4>
-      <p>Exporta tu historial completo a Excel (CSV) o crea copias de seguridad (JSON) desde el menú lateral para mayor seguridad.</p>
+      <p>Exporta tu historial completo a Excel (CSV) o genera copias de seguridad (JSON) con total seguridad.</p>
     </div>
 
     <button onclick="togglePaginaAyuda()" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">Volver al Control</button>
@@ -480,9 +479,11 @@
   let categoriasDefecto = ['🍔 Comida', '🚌 Transporte', '💡 Servicios', '📦 Varios'];
   let categorias = JSON.parse(localStorage.getItem('mis_categorias')) || categoriasDefecto;
   let periodosGuardados = JSON.parse(localStorage.getItem('mis_periodos')) || [];
-  let presupuestoMensual = parseFloat(localStorage.getItem('mi_presupuesto')) || 0;
+  let presupuestoMensualNIO = parseFloat(localStorage.getItem('mi_presupuesto_nio')) || 0;
   let monedaActual = localStorage.getItem('mi_moneda') || 'C$';
-  
+  let tasaCambioUSD = parseFloat(localStorage.getItem('tasa_usd')) || 36.62; // Tasa oficial fija orientativa de referencia
+  let tasaCambioEUR = parseFloat(localStorage.getItem('tasa_eur')) || 39.50; // Referencia aproximada EUR/NIO
+
   let filtroPeriodo = 'todos'; 
   let deferredPrompt = null;
   let modalCallback = null;
@@ -498,11 +499,36 @@
   monedaSelect.value = monedaActual;
   document.getElementById('monto').placeholder = `Monto en (${monedaActual})`;
 
+  // CONVERSIÓN INTELIGENTE DE DIVISAS
+  function convertirDesdeNIO(montoNIO, destino) {
+    if (destino === '$') return montoNIO / tasaCambioUSD;
+    if (destino === '€') return montoNIO / tasaCambioEUR;
+    return montoNIO; // C$
+  }
+
+  function convertirHaciaNIO(montoIngresado, origen) {
+    if (origen === '$') return montoIngresado * tasaCambioUSD;
+    if (origen === '€') return montoIngresado * tasaCambioEUR;
+    return montoIngresado; // C$
+  }
+
   function cambiarMoneda(nuevaMoneda) {
     monedaActual = nuevaMoneda;
     localStorage.setItem('mi_moneda', monedaActual);
     document.getElementById('monto').placeholder = `Monto en (${monedaActual})`;
     actualizarVista();
+  }
+
+  function configurarTasaCambio() {
+    toggleSidebar();
+    mostrarPromptCustom('Tasa de Cambio Oficial', 'Ingresa cuántos Córdobas (C$) equivale a 1 Dólar ($):', tasaCambioUSD, 'number', (valor) => {
+      if (valor !== null && !isNaN(parseFloat(valor)) && parseFloat(valor) > 0) {
+        tasaCambioUSD = parseFloat(valor);
+        localStorage.setItem('tasa_usd', tasaCambioUSD);
+        actualizarVista();
+        mostrarConfirmCustom('Tasa Actualizada', `Tasa fijada correctamente: 1 USD = ${tasaCambioUSD} C$`, null, true);
+      }
+    });
   }
 
   function verificarModoAppInstalada() {
@@ -641,11 +667,13 @@
 
   function abrirModalPresupuesto() {
     toggleSidebar();
-    const actual = presupuestoMensual > 0 ? presupuestoMensual : '';
+    const presupuestoActualEnMoneda = convertirDesdeNIO(presupuestoMensualNIO, monedaActual);
+    const actual = presupuestoActualEnMoneda > 0 ? presupuestoActualEnMoneda.toFixed(2) : '';
+    
     mostrarPromptCustom('Presupuesto Mensual', `Ingresa tu presupuesto total en (${monedaActual}):`, actual, 'number', (valor) => {
       if (valor !== null && !isNaN(parseFloat(valor))) {
-        presupuestoMensual = parseFloat(valor);
-        localStorage.setItem('mi_presupuesto', presupuestoMensual);
+        presupuestoMensualNIO = convertirHaciaNIO(parseFloat(valor), monedaActual);
+        localStorage.setItem('mi_presupuesto_nio', presupuestoMensualNIO);
         actualizarVista();
       }
     });
@@ -744,9 +772,9 @@
     const mesActual = new Date().getMonth();
     const anioActual = new Date().getFullYear();
 
-    let hoyTotal = 0;
-    let mesTotal = 0;
-    let totalesPorCategoria = {};
+    let hoyTotalNIO = 0;
+    let mesTotalNIO = 0;
+    let totalesPorCategoriaNIO = {};
 
     let gastosFiltrados = gastos.filter(gasto => {
       const gFecha = new Date(gasto.fecha);
@@ -769,24 +797,25 @@
     gastos.forEach(gasto => {
       const gFecha = new Date(gasto.fecha);
       if (gasto.fecha.split('T')[0] === hoyStr) {
-        hoyTotal += gasto.monto;
+        hoyTotalNIO += gasto.montoNIO;
       }
       if (gFecha.getMonth() === mesActual && gFecha.getFullYear() === anioActual) {
-        mesTotal += gasto.monto;
+        mesTotalNIO += gasto.montoNIO;
       }
     });
 
     gastosFiltrados.forEach(g => {
-      totalesPorCategoria[g.categoria] = (totalesPorCategoria[g.categoria] || 0) + g.monto;
+      totalesPorCategoriaNIO[g.categoria] = (totalesPorCategoriaNIO[g.categoria] || 0) + g.montoNIO;
     });
 
     gastosFiltrados.slice().reverse().forEach((gasto) => {
       const realIndex = gastos.indexOf(gasto);
+      const montoConvertido = convertirDesdeNIO(gasto.montoNIO, monedaActual);
       const li = document.createElement('li');
       const metodoStr = gasto.metodoPago ? ` • <small style="color:#a7f3d0">${gasto.metodoPago}</small>` : '';
       li.innerHTML = `
         <div>
-          <strong style="color: #f8fafc">${gasto.categoria}</strong> - <span style="color: #38bdf8">${monedaActual}${gasto.monto.toFixed(2)}</span>${metodoStr}<br>
+          <strong style="color: #f8fafc">${gasto.categoria}</strong> - <span style="color: #38bdf8">${monedaActual}${montoConvertido.toFixed(2)}</span>${metodoStr}<br>
           <small style="color:#64748b">${new Date(gasto.fecha).toLocaleDateString()} ${new Date(gasto.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
         </div>
         <div class="item-actions">
@@ -797,30 +826,36 @@
       lista.appendChild(li);
     });
 
-    document.getElementById('totalHoy').innerText = `${monedaActual}${hoyTotal.toFixed(2)}`;
-    document.getElementById('totalMes').innerText = `${monedaActual}${mesTotal.toFixed(2)}`;
+    const hoyConvertido = convertirDesdeNIO(hoyTotalNIO, monedaActual);
+    const mesConvertido = convertirDesdeNIO(mesTotalNIO, monedaActual);
 
-    actualizarBarraPresupuesto(mesTotal);
-    actualizarGraficoCategorias(totalesPorCategoria);
+    document.getElementById('totalHoy').innerText = `${monedaActual}${hoyConvertido.toFixed(2)}`;
+    document.getElementById('totalMes').innerText = `${monedaActual}${mesConvertido.toFixed(2)}`;
+
+    actualizarBarraPresupuesto(mesTotalNIO);
+    actualizarGraficoCategorias(totalesPorCategoriaNIO);
   }
 
-  function actualizarBarraPresupuesto(mesTotal) {
-    document.getElementById('presupuestoTextoTotal').innerText = `${monedaActual}${presupuestoMensual.toFixed(2)}`;
-    document.getElementById('presupuestoGastado').innerText = `${monedaActual}${mesTotal.toFixed(2)}`;
+  function actualizarBarraPresupuesto(mesTotalNIO) {
+    const presupuestoConvertido = convertirDesdeNIO(presupuestoMensualNIO, monedaActual);
+    const mesConvertido = convertirDesdeNIO(mesTotalNIO, monedaActual);
     
-    const disponible = presupuestoMensual - mesTotal;
+    document.getElementById('presupuestoTextoTotal').innerText = `${monedaActual}${presupuestoConvertido.toFixed(2)}`;
+    document.getElementById('presupuestoGastado').innerText = `${monedaActual}${mesConvertido.toFixed(2)}`;
+    
+    const disponibleConvertido = presupuestoConvertido - mesConvertido;
     const elemDisponible = document.getElementById('presupuestoDisponible');
-    elemDisponible.innerText = `${monedaActual}${disponible.toFixed(2)}`;
+    elemDisponible.innerText = `${monedaActual}${disponibleConvertido.toFixed(2)}`;
     
-    if (disponible < 0) {
+    if (disponibleConvertido < 0) {
       elemDisponible.style.color = '#f87171';
     } else {
       elemDisponible.style.color = '#10b981';
     }
 
     const barra = document.getElementById('budgetBarFill');
-    if (presupuestoMensual > 0) {
-      let porcentaje = (mesTotal / presupuestoMensual) * 100;
+    if (presupuestoMensualNIO > 0) {
+      let porcentaje = (mesTotalNIO / presupuestoMensualNIO) * 100;
       if (porcentaje > 100) porcentaje = 100;
       barra.style.width = `${porcentaje}%`;
 
@@ -836,48 +871,48 @@
     }
   }
 
-  function actualizarGraficoCategorias(totalesPorCat) {
+  function actualizarGraficoCategorias(totalesPorCatNIO) {
     const chartBar = document.getElementById('barChartMulti');
     const legend = document.getElementById('chartLegend');
     chartBar.innerHTML = '';
     legend.innerHTML = '';
 
-    const sumaTotal = Object.values(totalesPorCat).reduce((a, b) => a + b, 0);
+    const sumaTotalNIO = Object.values(totalesPorCatNIO).reduce((a, b) => a + b, 0);
 
-    if (sumaTotal === 0) {
+    if (sumaTotalNIO === 0) {
       chartBar.innerHTML = '<div style="width:100%; text-align:center; font-size:10px; color:#64748b; line-height:12px;">Sin registros</div>';
       return;
     }
 
-    let i = 0;
-    for (const [cat, monto] of Object.entries(totalesPorCat)) {
-      const porcentaje = ((monto / sumaTotal) * 100).toFixed(1);
-      const color = paletaColores[i % paletaColores.length];
+    for (const [cat, montoNIO] of Object.entries(totalesPorCatNIO)) {
+      const porcentaje = ((montoNIO / sumaTotalNIO) * 100).toFixed(1);
+      const color = paletaColores[Object.keys(totalesPorCatNIO).indexOf(cat) % paletaColores.length];
+      const montoConvertido = convertirDesdeNIO(montoNIO, monedaActual);
 
       const seg = document.createElement('div');
       seg.className = 'chart-segment';
       seg.style.width = `${porcentaje}%`;
       seg.style.backgroundColor = color;
-      seg.title = `${cat}: ${monedaActual}${monto.toFixed(2)} (${porcentaje}%)`;
+      seg.title = `${cat}: ${monedaActual}${montoConvertido.toFixed(2)} (${porcentaje}%)`;
       chartBar.appendChild(seg);
 
       const leg = document.createElement('div');
       leg.className = 'legend-item';
       leg.innerHTML = `<div class="legend-dot" style="background:${color}"></div> ${cat} (${porcentaje}%)`;
       legend.appendChild(leg);
-
-      i++;
     }
   }
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const monto = parseFloat(document.getElementById('monto').value);
+    const montoIngresado = parseFloat(document.getElementById('monto').value);
     const categoria = document.getElementById('categoria').value;
     const metodoPago = document.getElementById('metodoPago').value;
 
-    if (monto > 0 && categoria !== '__NUEVA__') {
-      gastos.push({ monto, categoria, metodoPago, fecha: new Date().toISOString() });
+    if (montoIngresado > 0 && categoria !== '__NUEVA__') {
+      // Guardamos siempre el monto convertido a Córdobas (NIO) como base estable
+      const montoNIO = convertirHaciaNIO(montoIngresado, monedaActual);
+      gastos.push({ montoNIO, categoria, metodoPago, fecha: new Date().toISOString() });
       document.getElementById('monto').value = '';
       guardarYRenderear();
     }
@@ -885,9 +920,11 @@
 
   function editarGasto(index) {
     const gastoActual = gastos[index];
-    mostrarPromptCustom('Modificar Gasto', `Modificar monto (${monedaActual}) para "${gastoActual.categoria}":`, gastoActual.monto, 'number', (valor) => {
+    const montoEnMonedaActual = convertirDesdeNIO(gastoActual.montoNIO, monedaActual);
+    
+    mostrarPromptCustom('Modificar Gasto', `Modificar monto (${monedaActual}) para "${gastoActual.categoria}":`, montoEnMonedaActual.toFixed(2), 'number', (valor) => {
       if (valor !== null && !isNaN(parseFloat(valor)) && parseFloat(valor) > 0) {
-        gastos[index].monto = parseFloat(valor);
+        gastos[index].montoNIO = convertirHaciaNIO(parseFloat(valor), monedaActual);
         guardarYRenderear();
       }
     });
@@ -913,7 +950,8 @@
       const fecha = new Date(g.fecha).toLocaleDateString();
       const hora = new Date(g.fecha).toLocaleTimeString();
       const metodo = g.metodoPago || 'Efectivo';
-      csvContent += `"${fecha}","${hora}","${g.categoria}","${metodo}",${g.monto.toFixed(2)}\n`;
+      const montoConvertido = convertirDesdeNIO(g.montoNIO, monedaActual);
+      csvContent += `"${fecha}","${hora}","${g.categoria}","${metodo}",${montoConvertido.toFixed(2)}\n`;
     });
 
     const encodedUri = encodeURI(csvContent);
@@ -930,8 +968,9 @@
       gastos,
       categorias,
       periodosGuardados,
-      presupuestoMensual,
-      monedaActual
+      presupuestoMensualNIO,
+      monedaActual,
+      tasaCambioUSD
     };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup, null, 2));
     const downloadAnchor = document.createElement('a');
@@ -954,14 +993,16 @@
           gastos = importedData.gastos;
           categorias = importedData.categorias || categoriasDefecto;
           periodosGuardados = importedData.periodosGuardados || [];
-          presupuestoMensual = importedData.presupuestoMensual || 0;
+          presupuestoMensualNIO = importedData.presupuestoMensualNIO || 0;
           monedaActual = importedData.monedaActual || 'C$';
+          tasaCambioUSD = importedData.tasaCambioUSD || 36.62;
 
           localStorage.setItem('mis_gastos', JSON.stringify(gastos));
           localStorage.setItem('mis_categorias', JSON.stringify(categorias));
           localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
-          localStorage.setItem('mi_presupuesto', presupuestoMensual);
+          localStorage.setItem('mi_presupuesto_nio', presupuestoMensualNIO);
           localStorage.setItem('mi_moneda', monedaActual);
+          localStorage.setItem('tasa_usd', tasaCambioUSD);
 
           monedaSelect.value = monedaActual;
           document.getElementById('monto').placeholder = `Monto en (${monedaActual})`;
