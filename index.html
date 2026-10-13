@@ -52,7 +52,7 @@
     }
     .select-moneda:focus { outline: none; border-color: #3b82f6; }
 
-    /* BOTÓN DE AYUDA CIRCULAR PERFECTO */
+    /* BOTÓN DE AYUDA */
     .btn-ayuda-compact {
       background: linear-gradient(135deg, #3b82f6, #1d4ed8);
       color: white;
@@ -273,6 +273,7 @@
       display: flex;
       gap: 8px;
       align-items: center;
+      width: 100%;
     }
     .custom-modal-box input { 
       background: #0f172a; 
@@ -281,7 +282,8 @@
       padding: 10px; 
       border-radius: 8px; 
       font-size: 15px; 
-      width: 100%; 
+      flex: 1;
+      min-width: 0;
     }
     .custom-modal-select-moneda {
       background: #0f172a;
@@ -292,7 +294,7 @@
       font-size: 14px;
       font-weight: bold;
       cursor: pointer;
-      width: auto;
+      width: 80px;
       flex-shrink: 0;
     }
     .custom-modal-buttons { display: flex; gap: 8px; margin-top: 4px; }
@@ -403,7 +405,7 @@
       <div id="totalHoy">C$0.00</div>
     </div>
     <div class="card">
-      <span>GASTO MES</span>
+      <span id="labelGastoPeriodo">GASTO SECCIÓN</span>
       <div id="totalMes">C$0.00</div>
     </div>
   </div>
@@ -411,7 +413,7 @@
   <!-- CONTROL DE PRESUPUESTO -->
   <div class="budget-container">
     <div class="budget-header">
-      <span id="tituloPresupuestoCard">PRESUPUESTO MENSUAL</span>
+      <span id="tituloPresupuestoCard">PRESUPUESTO</span>
       <span id="presupuestoTextoTotal">C$0.00</span>
     </div>
     <div class="budget-bar-bg">
@@ -461,7 +463,7 @@
 
     <div class="help-card">
       <h4>💱 Edición Multimoneda en Gastos</h4>
-      <p>Al editar un gasto anterior, ahora puedes ingresar la cantidad indicando directamente la moneda (C$, $, €) en la que se realizó la transacción.</p>
+      <p>Al editar un gasto anterior, puedes modificar su monto e indicar directamente la moneda (C$, $, €) en la que deseas guardarlo.</p>
     </div>
 
     <button onclick="togglePaginaAyuda()" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">Volver al Control</button>
@@ -511,14 +513,14 @@
   let gastos = JSON.parse(localStorage.getItem('mis_gastos')) || [];
   gastos = gastos.map(g => ({
     ...g,
-    montoNIO: typeof g.montoNIO === 'number' ? g.montoNIO : (g.monto || 0)
+    montoNIO: typeof g.montoNIO === 'number' ? g.montoNIO : (g.monto || 0),
+    periodoKey: g.periodoKey || 'todos'
   }));
 
   let categoriasDefecto = ['🍔 Comida', '🚌 Transporte', '💡 Servicios', '📦 Varios'];
   let categorias = JSON.parse(localStorage.getItem('mis_categorias')) || categoriasDefecto;
   let periodosGuardados = JSON.parse(localStorage.getItem('mis_periodos')) || [];
   
-  // Diccionario o valor global de presupuestos por periodo
   let presupuestosPeriodos = JSON.parse(localStorage.getItem('mis_presupuestos_periodos')) || {
     'todos': parseFloat(localStorage.getItem('mi_presupuesto_nio')) || 0,
     'mes_actual': 0,
@@ -602,7 +604,7 @@
     input.type = tipoInput || 'text';
     
     if (incluirSelectorMoneda) {
-      selectMonedaModal.style.display = 'block';
+      selectMonedaModal.style.display = 'inline-block';
       selectMonedaModal.value = monedaActual;
     } else {
       selectMonedaModal.style.display = 'none';
@@ -687,7 +689,7 @@
         deferredPrompt = null;
       });
     } else {
-      mostrarConfirmCustom('Instalación en Tu Teléfono', 'Agrega la app a tu pantalla de inicio desde el menú de tu navegador (Chrome or Safari).', null, true);
+      mostrarConfirmCustom('Instalación en Tu Teléfono', 'Agrega la app a tu pantalla de inicio desde el menú de tu navegador (Chrome o Safari).', null, true);
     }
   }
 
@@ -791,7 +793,7 @@
         const nuevoKey = 'p_' + Date.now();
         
         periodosGuardados.push({ key: nuevoKey, nombre: nombreLimpio });
-        presupuestosPeriodos[nuevoKey] = 0; // Inicializar presupuesto independiente en 0
+        presupuestosPeriodos[nuevoKey] = 0;
 
         localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
         localStorage.setItem('mis_presupuestos_periodos', JSON.stringify(presupuestosPeriodos));
@@ -849,11 +851,15 @@
 
     let gastosFiltrados = gastos.filter(gasto => {
       const gFecha = new Date(gasto.fecha);
+
       if (filtroPeriodo === 'mes_actual') {
         return gFecha.getMonth() === mesActual && gFecha.getFullYear() === anioActual;
       } else if (filtroPeriodo === 'anio_actual') {
         return gFecha.getFullYear() === anioActual;
       } else if (filtroPeriodo !== 'todos') {
+        // Coincidencia estricta por la clave de la sección vinculada o por coincidencia de texto
+        if (gasto.periodoKey === filtroPeriodo) return true;
+        
         const periodoObj = periodosGuardados.find(p => p.key === filtroPeriodo);
         if (periodoObj) {
           const texto = periodoObj.nombre.toLowerCase();
@@ -861,12 +867,12 @@
           const anioTexto = gFecha.getFullYear().toString();
           return texto.includes(mesTexto) || texto.includes(anioTexto);
         }
+        return false;
       }
       return true;
     });
 
     gastos.forEach(gasto => {
-      const gFecha = new Date(gasto.fecha);
       const valNIO = parseFloat(gasto.montoNIO) || 0;
       if (gasto.fecha.split('T')[0] === hoyStr) {
         hoyTotalNIO += valNIO;
@@ -986,7 +992,14 @@
 
     if (!isNaN(montoIngresado) && montoIngresado > 0 && categoria !== '__NUEVA__') {
       const montoNIO = convertirHaciaNIO(montoIngresado, monedaActual);
-      gastos.push({ montoNIO, categoria, metodoPago, fecha: new Date().toISOString() });
+      // Vincular explícitamente el gasto a la sección/periodo actualmente seleccionada
+      gastos.push({ 
+        montoNIO, 
+        categoria, 
+        metodoPago, 
+        fecha: new Date().toISOString(),
+        periodoKey: filtroPeriodo 
+      });
       document.getElementById('monto').value = '';
       guardarYRenderear();
     }
@@ -996,16 +1009,23 @@
     const gastoActual = gastos[index];
     const montoEnMonedaActual = convertirDesdeNIO(gastoActual.montoNIO, monedaActual);
     
-    // Añadimos el selector multimoneda al editar gastos
-    mostrarPromptCustom('Modificar Gasto', `Modificar monto y moneda para "${gastoActual.categoria}":`, montoEnMonedaActual.toFixed(2), 'number', true, (valor, monedaElegida) => {
-      if (valor !== null && valor !== '') {
-        const numVal = parseFloat(valor);
-        if (!isNaN(numVal) && numVal > 0) {
-          gastos[index].montoNIO = convertirHaciaNIO(numVal, monedaElegida);
-          guardarYRenderear();
+    // Abrir modal multimoneda activo
+    mostrarPromptCustom(
+      'Modificar Gasto', 
+      `Modificar monto y moneda para "${gastoActual.categoria}":`, 
+      montoEnMonedaActual.toFixed(2), 
+      'number', 
+      true, 
+      (valor, monedaElegida) => {
+        if (valor !== null && valor !== '') {
+          const numVal = parseFloat(valor);
+          if (!isNaN(numVal) && numVal > 0) {
+            gastos[index].montoNIO = convertirHaciaNIO(numVal, monedaElegida);
+            guardarYRenderear();
+          }
         }
       }
-    });
+    );
   }
 
   function eliminarGasto(index) {
@@ -1070,7 +1090,8 @@
         if (importedData.gastos) {
           gastos = importedData.gastos.map(g => ({
             ...g,
-            montoNIO: typeof g.montoNIO === 'number' ? g.montoNIO : (g.monto || 0)
+            montoNIO: typeof g.montoNIO === 'number' ? g.montoNIO : (g.monto || 0),
+            periodoKey: g.periodoKey || 'todos'
           }));
           categorias = importedData.categorias || categoriasDefecto;
           periodosGuardados = importedData.periodosGuardados || [];
