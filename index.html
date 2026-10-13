@@ -82,6 +82,7 @@
     .sidebar.active { left: 0; }
     .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; }
     .sidebar-header h3 { margin: 0; color: #f8fafc; }
+    
     .sidebar-menu-btn {
       background: #334155;
       color: #f8fafc;
@@ -93,8 +94,36 @@
       font-weight: 500;
       font-size: 13px;
       transition: background 0.2s;
+      width: 100%;
     }
     .sidebar-menu-btn:hover, .sidebar-menu-btn.active { background: #3b82f6; color: white; }
+
+    /* FILA DE PERIODO PERSONALIZADO CON BOTONES EDITAR/ELIMINAR */
+    .period-item-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+    }
+    .period-item-row .sidebar-menu-btn {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .btn-period-action {
+      background: #334155;
+      border: none;
+      color: #cbd5e1;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-period-action:hover { background: #475569; }
     
     .btn-action-sidebar {
       background: #059669;
@@ -150,7 +179,7 @@
     .legend-item { display: flex; align-items: center; gap: 4px; color: #cbd5e1; }
     .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
-    /* FORMULARIO AJUSTADO */
+    /* FORMULARIO */
     form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
     input, select, button { 
       width: 100%; 
@@ -204,7 +233,7 @@
 
 <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
-<!-- MENÚ LATERAL -->
+<!-- MENÚ LATERAL CON OPCIÓN DE EDITAR/BORRAR PERIODOS -->
 <div id="sidebar" class="sidebar">
   <div class="sidebar-header">
     <h3>⚙️ Menú y Herramientas</h3>
@@ -277,7 +306,7 @@
     </div>
   </div>
 
-  <!-- FORMULARIO ORDENADO VERTICALMENTE -->
+  <!-- FORMULARIO -->
   <form id="gastoForm">
     <input type="number" step="0.01" id="monto" placeholder="Monto en Córdobas (C$)" required>
     <select id="categoria" onchange="verificarNuevaCategoria(this)"></select>
@@ -306,10 +335,10 @@
   <div style="background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid #334155;">
     <h3 id="modalTitulo" style="margin-top: 0; color: #f8fafc;">Novedades de la App Pro</h3>
     <p id="modalTexto" style="color: #94a3b8; font-size: 13.5px; line-height: 1.5;">
+      • 📂 <strong>Gestionar Secciones:</strong> Puedes editar (✏️) o eliminar (✕) las secciones personalizadas del menú lateral.<br>
       • 🎯 <strong>Presupuesto:</strong> Define una meta mensual desde el menú lateral para saber cuánto dinero te queda.<br>
       • 💳 <strong>Método de Pago:</strong> Clasifica si pagaste en Efectivo, Tarjeta o Transferencia.<br>
-      • 📊 <strong>Gráfica:</strong> Revisa qué porcentaje de tu dinero se va en cada categoría.<br>
-      • 📄 <strong>Excel y Respaldos:</strong> Exporta tu historial o crea una copia de seguridad en el menú ☰.
+      • 📊 <strong>Gráfica:</strong> Revisa qué porcentaje de tu dinero se va en cada categoría.
     </p>
     <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
   </div>
@@ -417,29 +446,84 @@
     }
   }
 
-  // PERIODOS Y BARRA LATERAL
+  // GESTIÓN DE PERIODOS EN LA BARRA LATERAL (CREAR, EDITAR, ELIMINAR)
   function renderizarPeriodosSidebar() {
     containerPeriodosSidebar.innerHTML = '';
-    periodosGuardados.forEach(per => {
-      const btn = document.createElement('button');
-      btn.className = 'sidebar-menu-btn';
-      btn.innerText = `📂 ${per.nombre}`;
-      btn.onclick = (e) => filtrarPorPeriodo(per.key, `Periodo: ${per.nombre}`, e.target);
-      containerPeriodosSidebar.appendChild(btn);
+    periodosGuardados.forEach((per, index) => {
+      const row = document.createElement('div');
+      row.className = 'period-item-row';
+
+      const btnSelect = document.createElement('button');
+      btnSelect.className = 'sidebar-menu-btn';
+      if (filtroPeriodo === per.key) btnSelect.classList.add('active');
+      btnSelect.innerText = `📂 ${per.nombre}`;
+      btnSelect.onclick = (e) => filtrarPorPeriodo(per.key, `Periodo: ${per.nombre}`, e.target);
+
+      const btnEdit = document.createElement('button');
+      btnEdit.className = 'btn-period-action';
+      btnEdit.style.color = '#38bdf8';
+      btnEdit.innerText = '✏️';
+      btnEdit.title = 'Renombrar sección';
+      btnEdit.onclick = (e) => {
+        e.stopPropagation();
+        editarPeriodo(index);
+      };
+
+      const btnDel = document.createElement('button');
+      btnDel.className = 'btn-period-action';
+      btnDel.style.color = '#f87171';
+      btnDel.innerText = '✕';
+      btnDel.title = 'Eliminar sección';
+      btnDel.onclick = (e) => {
+        e.stopPropagation();
+        eliminarPeriodo(index);
+      };
+
+      row.appendChild(btnSelect);
+      row.appendChild(btnEdit);
+      row.appendChild(btnDel);
+      containerPeriodosSidebar.appendChild(row);
     });
   }
 
   function agregarNuevoPeriodo() {
-    const inputMes = prompt('Escribe el mes y año que deseas organizar (Ejemplo: Octubre 2026, 2025):');
+    const inputMes = prompt('Escribe el nombre del nuevo periodo o sección (Ej. Octubre 2026, Vacaciones, etc.):');
     if (inputMes && inputMes.trim() !== '') {
       const nombreLimpio = inputMes.trim();
-      const nuevoKey = 'p_' + nombreLimpio.toLowerCase().replace(/\s+/g, '_');
+      const nuevoKey = 'p_' + Date.now();
       
-      if (!periodosGuardados.some(p => p.key === nuevoKey)) {
-        periodosGuardados.push({ key: nuevoKey, nombre: nombreLimpio });
-        localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
-        renderizarPeriodosSidebar();
+      periodosGuardados.push({ key: nuevoKey, nombre: nombreLimpio });
+      localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
+      renderizarPeriodosSidebar();
+    }
+  }
+
+  function editarPeriodo(index) {
+    const periodoActual = periodosGuardados[index];
+    const nuevoNombre = prompt('Nuevo nombre para esta sección:', periodoActual.nombre);
+    
+    if (nuevoNombre && nuevoNombre.trim() !== '') {
+      periodosGuardados[index].nombre = nuevoNombre.trim();
+      localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
+      renderizarPeriodosSidebar();
+      
+      if (filtroPeriodo === periodoActual.key) {
+        document.getElementById('filtroTitulo').innerText = `Periodo: ${nuevoNombre.trim()}`;
       }
+    }
+  }
+
+  function eliminarPeriodo(index) {
+    const periodoActual = periodosGuardados[index];
+    if (confirm(`¿Deseas eliminar la sección "${periodoActual.nombre}" del menú?\n(Tus gastos guardados no se borrarán).`)) {
+      if (filtroPeriodo === periodoActual.key) {
+        filtroPeriodo = 'todos';
+        document.getElementById('filtroTitulo').innerText = 'Mostrando: Todos los gastos';
+      }
+      periodosGuardados.splice(index, 1);
+      localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
+      renderizarPeriodosSidebar();
+      actualizarVista();
     }
   }
 
@@ -704,7 +788,7 @@
 
   function toggleAyuda() {
     document.getElementById('modalTitulo').innerText = 'Novedades de la App Pro';
-    document.getElementById('modalTexto').innerHTML = '• 🎯 <strong>Presupuesto:</strong> Define una meta mensual desde el menú lateral para saber cuánto dinero te queda.<br>• 💳 <strong>Método de Pago:</strong> Clasifica si pagaste en Efectivo, Tarjeta o Transferencia.<br>• 📊 <strong>Gráfica:</strong> Revisa qué porcentaje de tu dinero se va en cada categoría.<br>• 📄 <strong>Excel y Respaldos:</strong> Exporta tu historial o crea una copia de seguridad en el menú ☰.';
+    document.getElementById('modalTexto').innerHTML = '• 📂 <strong>Gestionar Secciones:</strong> Puedes editar (✏️) o eliminar (✕) las secciones personalizadas del menú lateral.<br>• 🎯 <strong>Presupuesto:</strong> Define una meta mensual desde el menú lateral para saber cuánto dinero te queda.<br>• 💳 <strong>Método de Pago:</strong> Clasifica si pagaste en Efectivo, Tarjeta o Transferencia.<br>• 📊 <strong>Gráfica:</strong> Revisa qué porcentaje de tu dinero se va en cada categoría.';
     const modal = document.getElementById('modalAyuda');
     modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
   }
