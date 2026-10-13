@@ -427,7 +427,7 @@
   <div class="help-content">
     <div class="help-card">
       <h4>💱 Tasa de Cambio y Conversión</h4>
-      <p>La aplicación guarda internamente todos los montos normalizados en <strong>Córdobas (C$)</strong>. Al cambiar a Dólares ($) o Euros (€), los valores se convierten automáticamente usando la tasa oficial configurada (configurable desde el menú lateral).</p>
+      <p>La aplicación guarda internamente todos los montos normalizados en <strong>Córdobas (C$)</strong>. Al cambiar a Dólares ($) o Euros (€), los valores se convierten automáticamente usando la tasa oficial configurada.</p>
     </div>
 
     <div class="help-card">
@@ -476,13 +476,19 @@
 
 <script>
   let gastos = JSON.parse(localStorage.getItem('mis_gastos')) || [];
+  // Asegurar migración limpia si existían datos antiguos con 'monto' en lugar de 'montoNIO'
+  gastos = gastos.map(g => ({
+    ...g,
+    montoNIO: typeof g.montoNIO === 'number' ? g.montoNIO : (g.monto || 0)
+  }));
+
   let categoriasDefecto = ['🍔 Comida', '🚌 Transporte', '💡 Servicios', '📦 Varios'];
   let categorias = JSON.parse(localStorage.getItem('mis_categorias')) || categoriasDefecto;
   let periodosGuardados = JSON.parse(localStorage.getItem('mis_periodos')) || [];
   let presupuestoMensualNIO = parseFloat(localStorage.getItem('mi_presupuesto_nio')) || 0;
   let monedaActual = localStorage.getItem('mi_moneda') || 'C$';
-  let tasaCambioUSD = parseFloat(localStorage.getItem('tasa_usd')) || 36.62; // Tasa oficial fija orientativa de referencia
-  let tasaCambioEUR = parseFloat(localStorage.getItem('tasa_eur')) || 39.50; // Referencia aproximada EUR/NIO
+  let tasaCambioUSD = parseFloat(localStorage.getItem('tasa_usd')) || 36.62;
+  let tasaCambioEUR = parseFloat(localStorage.getItem('tasa_eur')) || 39.50;
 
   let filtroPeriodo = 'todos'; 
   let deferredPrompt = null;
@@ -499,17 +505,18 @@
   monedaSelect.value = monedaActual;
   document.getElementById('monto').placeholder = `Monto en (${monedaActual})`;
 
-  // CONVERSIÓN INTELIGENTE DE DIVISAS
   function convertirDesdeNIO(montoNIO, destino) {
-    if (destino === '$') return montoNIO / tasaCambioUSD;
-    if (destino === '€') return montoNIO / tasaCambioEUR;
-    return montoNIO; // C$
+    const valNIO = parseFloat(montoNIO) || 0;
+    if (destino === '$') return valNIO / tasaCambioUSD;
+    if (destino === '€') return valNIO / tasaCambioEUR;
+    return valNIO; 
   }
 
   function convertirHaciaNIO(montoIngresado, origen) {
-    if (origen === '$') return montoIngresado * tasaCambioUSD;
-    if (origen === '€') return montoIngresado * tasaCambioEUR;
-    return montoIngresado; // C$
+    const valIng = parseFloat(montoIngresado) || 0;
+    if (origen === '$') return valIng * tasaCambioUSD;
+    if (origen === '€') return valIng * tasaCambioEUR;
+    return valIng; 
   }
 
   function cambiarMoneda(nuevaMoneda) {
@@ -550,7 +557,7 @@
     document.getElementById('modalPromptTitulo').innerText = titulo;
     document.getElementById('modalPromptDesc').innerText = descripcion;
     const input = document.getElementById('modalPromptInput');
-    input.value = valorInicial || '';
+    input.value = valorInicial !== undefined && valorInicial !== null ? valorInicial : '';
     input.type = tipoInput || 'text';
     
     document.getElementById('customModal').style.display = 'flex';
@@ -671,10 +678,13 @@
     const actual = presupuestoActualEnMoneda > 0 ? presupuestoActualEnMoneda.toFixed(2) : '';
     
     mostrarPromptCustom('Presupuesto Mensual', `Ingresa tu presupuesto total en (${monedaActual}):`, actual, 'number', (valor) => {
-      if (valor !== null && !isNaN(parseFloat(valor))) {
-        presupuestoMensualNIO = convertirHaciaNIO(parseFloat(valor), monedaActual);
-        localStorage.setItem('mi_presupuesto_nio', presupuestoMensualNIO);
-        actualizarVista();
+      if (valor !== null && valor !== '') {
+        const numVal = parseFloat(valor);
+        if (!isNaN(numVal)) {
+          presupuestoMensualNIO = convertirHaciaNIO(numVal, monedaActual);
+          localStorage.setItem('mi_presupuesto_nio', presupuestoMensualNIO);
+          actualizarVista();
+        }
       }
     });
   }
@@ -796,16 +806,18 @@
 
     gastos.forEach(gasto => {
       const gFecha = new Date(gasto.fecha);
+      const valNIO = parseFloat(gasto.montoNIO) || 0;
       if (gasto.fecha.split('T')[0] === hoyStr) {
-        hoyTotalNIO += gasto.montoNIO;
+        hoyTotalNIO += valNIO;
       }
       if (gFecha.getMonth() === mesActual && gFecha.getFullYear() === anioActual) {
-        mesTotalNIO += gasto.montoNIO;
+        mesTotalNIO += valNIO;
       }
     });
 
     gastosFiltrados.forEach(g => {
-      totalesPorCategoriaNIO[g.categoria] = (totalesPorCategoriaNIO[g.categoria] || 0) + g.montoNIO;
+      const valNIO = parseFloat(g.montoNIO) || 0;
+      totalesPorCategoriaNIO[g.categoria] = (totalesPorCategoriaNIO[g.categoria] || 0) + valNIO;
     });
 
     gastosFiltrados.slice().reverse().forEach((gasto) => {
@@ -884,9 +896,10 @@
       return;
     }
 
+    let i = 0;
     for (const [cat, montoNIO] of Object.entries(totalesPorCatNIO)) {
       const porcentaje = ((montoNIO / sumaTotalNIO) * 100).toFixed(1);
-      const color = paletaColores[Object.keys(totalesPorCatNIO).indexOf(cat) % paletaColores.length];
+      const color = paletaColores[i % paletaColores.length];
       const montoConvertido = convertirDesdeNIO(montoNIO, monedaActual);
 
       const seg = document.createElement('div');
@@ -900,6 +913,8 @@
       leg.className = 'legend-item';
       leg.innerHTML = `<div class="legend-dot" style="background:${color}"></div> ${cat} (${porcentaje}%)`;
       legend.appendChild(leg);
+
+      i++;
     }
   }
 
@@ -909,8 +924,7 @@
     const categoria = document.getElementById('categoria').value;
     const metodoPago = document.getElementById('metodoPago').value;
 
-    if (montoIngresado > 0 && categoria !== '__NUEVA__') {
-      // Guardamos siempre el monto convertido a Córdobas (NIO) como base estable
+    if (!isNaN(montoIngresado) && montoIngresado > 0 && categoria !== '__NUEVA__') {
       const montoNIO = convertirHaciaNIO(montoIngresado, monedaActual);
       gastos.push({ montoNIO, categoria, metodoPago, fecha: new Date().toISOString() });
       document.getElementById('monto').value = '';
@@ -923,9 +937,12 @@
     const montoEnMonedaActual = convertirDesdeNIO(gastoActual.montoNIO, monedaActual);
     
     mostrarPromptCustom('Modificar Gasto', `Modificar monto (${monedaActual}) para "${gastoActual.categoria}":`, montoEnMonedaActual.toFixed(2), 'number', (valor) => {
-      if (valor !== null && !isNaN(parseFloat(valor)) && parseFloat(valor) > 0) {
-        gastos[index].montoNIO = convertirHaciaNIO(parseFloat(valor), monedaActual);
-        guardarYRenderear();
+      if (valor !== null && valor !== '') {
+        const numVal = parseFloat(valor);
+        if (!isNaN(numVal) && numVal > 0) {
+          gastos[index].montoNIO = convertirHaciaNIO(numVal, monedaActual);
+          guardarYRenderear();
+        }
       }
     });
   }
@@ -990,12 +1007,15 @@
       try {
         const importedData = JSON.parse(e.target.result);
         if (importedData.gastos) {
-          gastos = importedData.gastos;
+          gastos = importedData.gastos.map(g => ({
+            ...g,
+            montoNIO: typeof g.montoNIO === 'number' ? g.montoNIO : (g.monto || 0)
+          }));
           categorias = importedData.categorias || categoriasDefecto;
           periodosGuardados = importedData.periodosGuardados || [];
-          presupuestoMensualNIO = importedData.presupuestoMensualNIO || 0;
+          presupuestoMensualNIO = parseFloat(importedData.presupuestoMensualNIO) || 0;
           monedaActual = importedData.monedaActual || 'C$';
-          tasaCambioUSD = importedData.tasaCambioUSD || 36.62;
+          tasaCambioUSD = parseFloat(importedData.tasaCambioUSD) || 36.62;
 
           localStorage.setItem('mis_gastos', JSON.stringify(gastos));
           localStorage.setItem('mis_categorias', JSON.stringify(categorias));
