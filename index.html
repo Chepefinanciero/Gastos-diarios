@@ -33,6 +33,33 @@
     .btn-icon { background: #334155; color: #cbd5e1; border: none; border-radius: 50%; width: 34px; height: 34px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
     .btn-icon:hover { background: #475569; }
 
+    /* TARJETA DE INSTALACIÓN RÁPIDA */
+    .install-banner {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .install-banner-text { font-size: 13px; line-height: 1.3; }
+    .install-banner-text strong { display: block; font-size: 14px; }
+    .btn-install {
+      background: #ffffff;
+      color: #1d4ed8;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-install:active { background: #e2e8f0; }
+
     /* BARRA LATERAL (SIDEBAR) */
     .sidebar {
       position: fixed;
@@ -161,11 +188,12 @@
     <span style="font-size: 12px; color: #94a3b8;">Categorías:</span>
   </div>
 
-  <!-- Contenedor dinámico de categorías -->
   <div id="listaCategoriasSidebar" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
-  <!-- Botón para agregar nueva categoría -->
   <button class="btn-add-cat" onclick="crearNuevaCategoria()">➕ Nueva Categoría</button>
+  
+  <hr style="border: 0; border-top: 1px solid #334155; margin: 5px 0;">
+  <button class="sidebar-menu-btn" onclick="mostrarInstruccionesInstalacion()" style="background: #2563eb; color: white;">📲 Instalar en Celular / PC</button>
 </div>
 
 <div class="app">
@@ -177,6 +205,15 @@
     <div class="header-buttons">
       <button class="btn-icon" onclick="toggleAyuda()">?</button>
     </div>
+  </div>
+
+  <!-- BANNER DE INSTALACIÓN DINÁMICO (Sólo aparece si no está instalada) -->
+  <div id="bannerInstalar" class="install-banner" style="display: none;">
+    <div class="install-banner-text">
+      <strong>📲 ¿Usar como App?</strong>
+      Instálala en tu pantalla de inicio para acceso rápido.
+    </div>
+    <button class="btn-install" onclick="ejecutarInstalacion()">Instalar</button>
   </div>
   
   <div class="cards">
@@ -201,12 +238,12 @@
   <ul id="listaGastos"></ul>
 </div>
 
-<!-- Ventana Emergente de Ayuda -->
+<!-- Ventana Emergente de Ayuda / Instrucciones de Instalación -->
 <div id="modalAyuda" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 2000;">
   <div style="background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid #334155;">
-    <h3 style="margin-top: 0; color: #f8fafc;">¿Cómo agregar categorías?</h3>
-    <p style="color: #94a3b8; font-size: 14px; line-height: 1.5;">
-      Abre el menú lateral (☰) y toca el botón verde <strong>"➕ Nueva Categoría"</strong>. Ingresa un emoji y el nombre (ejemplo: <i>🐶 Mascotas</i>) y aparecerá de inmediato para usarla en tus gastos.
+    <h3 id="modalTitulo" style="margin-top: 0; color: #f8fafc;">¿Cómo instalar esta App?</h3>
+    <p id="modalTexto" style="color: #94a3b8; font-size: 14px; line-height: 1.5;">
+      Puedes instalar esta app directamente en tu dispositivo.
     </p>
     <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
   </div>
@@ -218,7 +255,6 @@
 </div>
 
 <script>
-  // Cargar gastos y categorías iniciales
   let gastos = JSON.parse(localStorage.getItem('mis_gastos')) || [];
   let categoriasDefecto = [
     { id: 'Comida', nombre: '🍔 Comida' },
@@ -228,14 +264,54 @@
   ];
   let categorias = JSON.parse(localStorage.getItem('mis_categorias')) || categoriasDefecto;
   let filtroActual = 'todos';
+  let deferredPrompt = null;
 
   const form = document.getElementById('gastoForm');
   const lista = document.getElementById('listaGastos');
   const selectCat = document.getElementById('categoria');
   const containerCatSidebar = document.getElementById('listaCategoriasSidebar');
 
+  // LÓGICA DE INSTALACIÓN PWA
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Mostrar el banner dinámico arriba de las tarjetas
+    document.getElementById('bannerInstalar').style.display = 'flex';
+  });
+
+  function ejecutarInstalacion() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          document.getElementById('bannerInstalar').style.display = 'none';
+        }
+        deferredPrompt = null;
+      });
+    } else {
+      mostrarInstruccionesInstalacion();
+    }
+  }
+
+  function mostrarInstruccionesInstalacion() {
+    const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const esiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    document.getElementById('modalTitulo').innerText = '📲 Cómo instalar la App';
+    
+    if (esiOS) {
+      document.getElementById('modalTexto').innerHTML = '<strong>En iPhone / iPad:</strong><br>1. Toca el botón <strong>Compartir</strong> (cuadrado con flecha hacia arriba) en Safari.<br>2. Selecciona <strong>"Agregar a la pantalla de inicio"</strong>.';
+    } else if (esMovil) {
+      document.getElementById('modalTexto').innerHTML = '<strong>En Android:</strong><br>1. Toca los <strong>3 puntos</strong> arriba a la derecha en Chrome.<br>2. Elige <strong>"Instalar aplicación"</strong> o "Agregar a pantalla principal".';
+    } else {
+      document.getElementById('modalTexto').innerHTML = '<strong>En PC / Computadora:</strong><br>1. Busca el ícono de <strong>Instalar app</strong> (un monitor con una flecha) en la barra de dirección del navegador (arriba a la derecha).<br>2. O abre esta web en tu celular para instalarla ahí directamente.';
+    }
+    
+    const modal = document.getElementById('modalAyuda');
+    modal.style.display = 'flex';
+  }
+
   function renderizarCategorias() {
-    // 1. Llenar el desplegable del formulario
     selectCat.innerHTML = '';
     categorias.forEach(cat => {
       const option = document.createElement('option');
@@ -244,7 +320,6 @@
       selectCat.appendChild(option);
     });
 
-    // 2. Llenar la lista del menú lateral
     containerCatSidebar.innerHTML = '';
     categorias.forEach(cat => {
       const btn = document.createElement('button');
@@ -296,79 +371,4 @@
     gastos.forEach(gasto => {
       const gFecha = new Date(gasto.fecha);
       if (gasto.fecha.split('T')[0] === hoyStr) {
-        hoyTotal += gasto.monto;
-      }
-      if (gFecha.getMonth() === mesActual && gFecha.getFullYear() === anioActual) {
-        mesTotal += gasto.monto;
-      }
-    });
-
-    gastosFiltrados.slice().reverse().forEach((gasto) => {
-      const realIndex = gastos.indexOf(gasto);
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div>
-          <strong style="color: #f8fafc">${gasto.categoria}</strong> - <span style="color: #38bdf8">C$${gasto.monto.toFixed(2)}</span><br>
-          <small style="color:#64748b">${new Date(gasto.fecha).toLocaleDateString()} ${new Date(gasto.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
-        </div>
-        <button class="btn-del" onclick="eliminarGasto(${realIndex})">✕</button>
-      `;
-      lista.appendChild(li);
-    });
-
-    document.getElementById('totalHoy').innerText = `C$${hoyTotal.toFixed(2)}`;
-    document.getElementById('totalMes').innerText = `C$${mesTotal.toFixed(2)}`;
-  }
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const monto = parseFloat(document.getElementById('monto').value);
-    const categoria = document.getElementById('categoria').value;
-
-    if (monto > 0) {
-      gastos.push({ monto, categoria, fecha: new Date().toISOString() });
-      document.getElementById('monto').value = '';
-      guardarYRenderear();
-    }
-  });
-
-  function eliminarGasto(index) {
-    gastos.splice(index, 1);
-    guardarYRenderear();
-  }
-
-  function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('active');
-    document.getElementById('overlay').classList.toggle('active');
-  }
-
-  function filtrarGastos(criterio, textoTitulo, elementoBtn) {
-    filtroActual = criterio;
-    document.getElementById('filtroTitulo').innerText = textoTitulo;
-    
-    document.querySelectorAll('.sidebar-menu-btn').forEach(btn => btn.classList.remove('active'));
-    if (elementoBtn) elementoBtn.classList.add('active');
-
-    toggleSidebar();
-    actualizarVista();
-  }
-
-  function toggleAyuda() {
-    const modal = document.getElementById('modalAyuda');
-    modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
-  }
-
-  window.onclick = function(event) {
-    const modal = document.getElementById('modalAyuda');
-    if (event.target === modal) {
-      modal.style.display = 'none';
-    }
-  }
-
-  // Inicializar
-  renderizarCategorias();
-  actualizarVista();
-</script>
-
-</body>
-</html>
+        hoyTotal += gasto.m
