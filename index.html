@@ -48,7 +48,8 @@
       border-right: 1px solid #334155;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 12px;
+      overflow-y: auto;
     }
     .sidebar.active { left: 0; }
     .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; }
@@ -57,17 +58,36 @@
       background: #334155;
       color: #f8fafc;
       border: none;
-      padding: 12px;
+      padding: 10px 12px;
       border-radius: 8px;
       text-align: left;
       cursor: pointer;
       font-weight: 500;
       font-size: 14px;
       transition: background 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .sidebar-menu-btn:hover, .sidebar-menu-btn.active { background: #3b82f6; color: white; }
+    
+    .btn-add-cat {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 5px;
+    }
+    .btn-add-cat:hover { background: #059669; }
 
-    /* Fondo oscuro al abrir el menú */
     .overlay {
       display: none;
       position: fixed;
@@ -95,7 +115,6 @@
     li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #334155; color: #e2e8f0; }
     .btn-del { background: none; border: none; color: #f87171; font-size: 14px; cursor: pointer; padding: 4px 8px; }
 
-    /* Indicador de filtro activo */
     #filtroTitulo { font-size: 13px; color: #38bdf8; margin-bottom: 10px; font-weight: 500; }
 
     /* Banner inferior */
@@ -124,7 +143,6 @@
 </head>
 <body>
 
-<!-- Fondo oscuro difuminado para el menú lateral -->
 <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
 <!-- MENÚ LATERAL (SIDEBAR) -->
@@ -133,15 +151,21 @@
     <h3>📂 Organizar Gastos</h3>
     <button class="btn-icon" onclick="toggleSidebar()" style="width: 28px; height: 28px; font-size: 12px;">✕</button>
   </div>
-  <p style="font-size: 12px; color: #94a3b8; margin: 0;">Filtrar historial por:</p>
   
-  <button class="sidebar-menu-btn active" onclick="filtrarGastos('todos', 'Mostrando: Todos los gastos')">📋 Ver Todos</button>
-  <button class="sidebar-menu-btn" onclick="filtrarGastos('mes_actual', 'Mostrando: Mes Actual')">📅 Este Mes</button>
-  <hr style="border: 0; border-top: 1px solid #334155; margin: 5px 0;">
-  <button class="sidebar-menu-btn" onclick="filtrarGastos('Comida', 'Categoría: Comida')">🍔 Comida</button>
-  <button class="sidebar-menu-btn" onclick="filtrarGastos('Transporte', 'Categoría: Transporte')">🚌 Transporte</button>
-  <button class="sidebar-menu-btn" onclick="filtrarGastos('Servicios', 'Categoría: Servicios')">💡 Servicios</button>
-  <button class="sidebar-menu-btn" onclick="filtrarGastos('Varios', 'Categoría: Varios')">📦 Varios</button>
+  <button class="sidebar-menu-btn active" onclick="filtrarGastos('todos', 'Mostrando: Todos los gastos', this)">📋 Ver Todos</button>
+  <button class="sidebar-menu-btn" onclick="filtrarGastos('mes_actual', 'Mostrando: Mes Actual', this)">📅 Este Mes</button>
+  
+  <hr style="border: 0; border-top: 1px solid #334155; margin: 2px 0;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <span style="font-size: 12px; color: #94a3b8;">Categorías:</span>
+  </div>
+
+  <!-- Contenedor dinámico de categorías -->
+  <div id="listaCategoriasSidebar" style="display: flex; flex-direction: column; gap: 8px;"></div>
+
+  <!-- Botón para agregar nueva categoría -->
+  <button class="btn-add-cat" onclick="crearNuevaCategoria()">➕ Nueva Categoría</button>
 </div>
 
 <div class="app">
@@ -168,12 +192,7 @@
 
   <form id="gastoForm">
     <input type="number" step="0.01" id="monto" placeholder="Monto (C$)" required>
-    <select id="categoria">
-      <option value="Comida">🍔 Comida</option>
-      <option value="Transporte">🚌 Transporte</option>
-      <option value="Servicios">💡 Servicios</option>
-      <option value="Varios">📦 Varios</option>
-    </select>
+    <select id="categoria"></select>
     <button type="submit">+ Registrar Gasto</button>
   </form>
 
@@ -185,9 +204,9 @@
 <!-- Ventana Emergente de Ayuda -->
 <div id="modalAyuda" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 2000;">
   <div style="background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid #334155;">
-    <h3 style="margin-top: 0; color: #f8fafc;">¿Cómo usar el menú lateral?</h3>
+    <h3 style="margin-top: 0; color: #f8fafc;">¿Cómo agregar categorías?</h3>
     <p style="color: #94a3b8; font-size: 14px; line-height: 1.5;">
-      Toca el botón de las tres líneas (☰) arriba a la izquierda para abrir el menú de organización. Desde ahí puedes filtrar tus registros por el mes actual o por categorías específicas al instante.
+      Abre el menú lateral (☰) y toca el botón verde <strong>"➕ Nueva Categoría"</strong>. Ingresa un emoji y el nombre (ejemplo: <i>🐶 Mascotas</i>) y aparecerá de inmediato para usarla en tus gastos.
     </p>
     <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
   </div>
@@ -199,11 +218,56 @@
 </div>
 
 <script>
+  // Cargar gastos y categorías iniciales
   let gastos = JSON.parse(localStorage.getItem('mis_gastos')) || [];
+  let categoriasDefecto = [
+    { id: 'Comida', nombre: '🍔 Comida' },
+    { id: 'Transporte', nombre: '🚌 Transporte' },
+    { id: 'Servicios', nombre: '💡 Servicios' },
+    { id: 'Varios', nombre: '📦 Varios' }
+  ];
+  let categorias = JSON.parse(localStorage.getItem('mis_categorias')) || categoriasDefecto;
   let filtroActual = 'todos';
 
   const form = document.getElementById('gastoForm');
   const lista = document.getElementById('listaGastos');
+  const selectCat = document.getElementById('categoria');
+  const containerCatSidebar = document.getElementById('listaCategoriasSidebar');
+
+  function renderizarCategorias() {
+    // 1. Llenar el desplegable del formulario
+    selectCat.innerHTML = '';
+    categorias.forEach(cat => {
+      const option = document.createElement('option');
+      option.value = cat.id;
+      option.innerText = cat.nombre;
+      selectCat.appendChild(option);
+    });
+
+    // 2. Llenar la lista del menú lateral
+    containerCatSidebar.innerHTML = '';
+    categorias.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'sidebar-menu-btn';
+      btn.innerText = cat.nombre;
+      btn.onclick = (e) => filtrarGastos(cat.id, `Categoría: ${cat.nombre}`, e.target);
+      containerCatSidebar.appendChild(btn);
+    });
+  }
+
+  function crearNuevaCategoria() {
+    const nombreCat = prompt('Escribe el nombre de la nueva categoría (puedes agregar un emoji al inicio):');
+    if (nombreCat && nombreCat.trim() !== '') {
+      const nuevaCat = {
+        id: nombreCat.trim(),
+        nombre: nombreCat.trim()
+      };
+      categorias.push(nuevaCat);
+      localStorage.setItem('mis_categorias', JSON.stringify(categorias));
+      renderizarCategorias();
+      alert(`Categoría "${nombreCat}" agregada con éxito.`);
+    }
+  }
 
   function guardarYRenderear() {
     localStorage.setItem('mis_gastos', JSON.stringify(gastos));
@@ -219,7 +283,6 @@
     let hoyTotal = 0;
     let mesTotal = 0;
 
-    // Filtrar la lista según la opción seleccionada en el menú lateral
     let gastosFiltrados = gastos.filter(gasto => {
       const gFecha = new Date(gasto.fecha);
       if (filtroActual === 'mes_actual') {
@@ -230,7 +293,6 @@
       return true;
     });
 
-    // Calcular siempre los totales generales (independientemente del filtro visual)
     gastos.forEach(gasto => {
       const gFecha = new Date(gasto.fecha);
       if (gasto.fecha.split('T')[0] === hoyStr) {
@@ -242,7 +304,6 @@
     });
 
     gastosFiltrados.slice().reverse().forEach((gasto) => {
-      // Encontrar el índice real en el array principal para poder borrar correctamente
       const realIndex = gastos.indexOf(gasto);
       const li = document.createElement('li');
       li.innerHTML = `
@@ -281,13 +342,12 @@
     document.getElementById('overlay').classList.toggle('active');
   }
 
-  function filtrarGastos(criterio, textoTitulo) {
+  function filtrarGastos(criterio, textoTitulo, elementoBtn) {
     filtroActual = criterio;
     document.getElementById('filtroTitulo').innerText = textoTitulo;
     
-    // Actualizar estilo visual de los botones del menú
     document.querySelectorAll('.sidebar-menu-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    if (elementoBtn) elementoBtn.classList.add('active');
 
     toggleSidebar();
     actualizarVista();
@@ -305,6 +365,8 @@
     }
   }
 
+  // Inicializar
+  renderizarCategorias();
   actualizarVista();
 </script>
 
