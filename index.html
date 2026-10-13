@@ -94,19 +94,19 @@
       font-weight: 500;
       font-size: 13px;
       transition: background 0.2s;
-      width: 100%;
     }
     .sidebar-menu-btn:hover, .sidebar-menu-btn.active { background: #3b82f6; color: white; }
 
-    /* FILA DE PERIODO PERSONALIZADO CON BOTONES EDITAR/ELIMINAR */
+    /* CORRECCIÓN: FILA DE PERIODO CON TAMAÑO FIJO PARA BOTONES */
     .period-item-row {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       width: 100%;
     }
     .period-item-row .sidebar-menu-btn {
-      flex: 1;
+      flex: 1; /* Ocupa todo el espacio restante */
+      min-width: 0; /* Permite que el texto se recorte si es muy largo */
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -115,13 +115,15 @@
       background: #334155;
       border: none;
       color: #cbd5e1;
-      padding: 8px;
+      width: 32px;
+      height: 36px;
       border-radius: 6px;
       cursor: pointer;
       font-size: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0; /* Evita que el botón se reduzca o expanda de más */
     }
     .btn-period-action:hover { background: #475569; }
     
@@ -233,7 +235,7 @@
 
 <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
-<!-- MENÚ LATERAL CON OPCIÓN DE EDITAR/BORRAR PERIODOS -->
+<!-- MENÚ LATERAL -->
 <div id="sidebar" class="sidebar">
   <div class="sidebar-header">
     <h3>⚙️ Menú y Herramientas</h3>
@@ -246,7 +248,7 @@
   <button class="sidebar-menu-btn" onclick="filtrarPorPeriodo('anio_actual', 'Mostrando: Este Año', this)">🎆 Año Actual</button>
   
   <div id="listaPeriodosSidebar" style="display: flex; flex-direction: column; gap: 6px;"></div>
-  <button class="sidebar-menu-btn" onclick="agregarNuevoPeriodo()" style="background: #334155; border: 1px dashed #475569;">➕ Agregar Mes/Año</button>
+  <button class="sidebar-menu-btn" onclick="agregarNuevoPeriodo()" style="background: #334155; border: 1px dashed #475569; text-align: center;">➕ Agregar Mes/Año</button>
   
   <hr style="border: 0; border-top: 1px solid #334155; margin: 4px 0;">
   
@@ -258,7 +260,7 @@
   <input type="file" id="inputRestaurar" accept=".json" style="display: none;" onchange="importarRespaldoJSON(event)">
 
   <hr style="border: 0; border-top: 1px solid #334155; margin: 4px 0;">
-  <button class="sidebar-menu-btn" onclick="mostrarInstruccionesInstalacion()" style="background: #2563eb; color: white;">📲 Instalar en Celular / PC</button>
+  <button class="sidebar-menu-btn" onclick="mostrarInstruccionesInstalacion()" style="background: #2563eb; color: white; text-align: center;">📲 Instalar en Celular / PC</button>
 </div>
 
 <div class="app">
@@ -446,7 +448,7 @@
     }
   }
 
-  // GESTIÓN DE PERIODOS EN LA BARRA LATERAL (CREAR, EDITAR, ELIMINAR)
+  // GESTIÓN DE PERIODOS EN LA BARRA LATERAL (CORREGIDO)
   function renderizarPeriodosSidebar() {
     containerPeriodosSidebar.innerHTML = '';
     periodosGuardados.forEach((per, index) => {
