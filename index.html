@@ -4,51 +4,62 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Control de Gastos</title>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2459107757321233"
-     crossorigin="anonymous"></script>
   <style>
     * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { 
-      background: #f4f6f8; 
+      background: #0f172a; /* Fondo general oscuro y discreto */
+      color: #f8fafc;
       margin: 0; 
       padding: 16px; 
-      padding-bottom: 80px; /* Espacio reservado para que el banner no tape el contenido */
+      padding-bottom: 80px; 
       display: flex; 
       justify-content: center; 
     }
-    .app { background: white; max-width: 400px; width: 100%; border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    h2 { margin-top: 0; color: #1e293b; text-align: center; }
+    .app { 
+      background: #1e293b; /* Tarjeta principal estilo Slate */
+      max-width: 400px; 
+      width: 100%; 
+      border-radius: 16px; 
+      padding: 20px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
+    }
+    h2 { margin: 0; color: #f8fafc; }
+    h3 { color: #cbd5e1; }
+    .header-app { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .btn-ayuda { background: #334155; color: #cbd5e1; border: none; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .btn-ayuda:hover { background: #475569; }
     .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-    .card { background: #e2e8f0; padding: 12px; border-radius: 10px; text-align: center; }
-    .card span { font-size: 12px; color: #64748b; font-weight: bold; }
-    .card div { font-size: 18px; font-weight: bold; color: #0f172a; margin-top: 4px; }
+    .card { background: #334155; padding: 12px; border-radius: 10px; text-align: center; }
+    .card span { font-size: 12px; color: #94a3b8; font-weight: bold; }
+    .card div { font-size: 18px; font-weight: bold; color: #f8fafc; margin-top: 4px; }
     form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-    input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 16px; }
-    button { background: #2563eb; color: white; border: none; font-weight: bold; cursor: pointer; }
-    button:active { background: #1d4ed8; }
+    input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #475569; font-size: 16px; background: #0f172a; color: #f8fafc; }
+    input::placeholder { color: #64748b; }
+    button[type="submit"] { background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button[type="submit"]:active { background: #2563eb; }
     ul { list-style: none; padding: 0; margin: 0; }
-    li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
-    .btn-del { background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 4px 8px; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #334155; color: #e2e8f0; }
+    .btn-del { background: none; border: none; color: #f87171; font-size: 14px; cursor: pointer; padding: 4px 8px; }
 
-    /* CONTENEDOR DEL BANNER DISCRETO */
+    /* Banner inferior */
     .ad-banner-container {
       position: fixed;
       bottom: 0;
       left: 0;
       width: 100%;
       height: 65px;
-      background: #ffffff;
-      border-top: 1px solid #e2e8f0;
+      background: #1e293b;
+      border-top: 1px solid #334155;
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 1000;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
     }
     .ad-placeholder {
       font-size: 12px;
       color: #94a3b8;
-      border: 1px dashed #cbd5e1;
+      border: 1px dashed #475569;
       padding: 10px 20px;
       border-radius: 6px;
     }
@@ -57,9 +68,9 @@
 <body>
 
 <div class="app">
-  <h2>Control Express</h2><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-    <h2 style="margin: 0;">Control Express</h2>
-    <button onclick="toggleAyuda()" style="background: #e2e8f0; color: #475569; border: none; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">?</button>
+  <div class="header-app">
+    <h2>Control Express</h2>
+    <button class="btn-ayuda" onclick="toggleAyuda()">?</button>
   </div>
   
   <div class="cards">
@@ -74,7 +85,7 @@
   </div>
 
   <form id="gastoForm">
-    <input type="number" step="0.01" id="monto" placeholder="Monto" required>
+    <input type="number" step="0.01" id="monto" placeholder="Monto (C$)" required>
     <select id="categoria">
       <option value="Comida">🍔 Comida</option>
       <option value="Transporte">🚌 Transporte</option>
@@ -87,20 +98,20 @@
   <h3>Historial Reciente</h3>
   <ul id="listaGastos"></ul>
 </div>
-  
-<!-- VENTANA DE AYUDA -->
-  <div id="modalAyuda" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000;">
-    <div style="background: white; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-      <h3 style="margin-top: 0; color: #1e293b;">¿Para qué sirve esta app?</h3>
-      <p style="color: #475569; font-size: 14px; line-height: 1.5;">
-        Esta es tu microapp de control financiero rápido. Te permite registrar tus gastos diarios y mensuales al instante de forma local y privada en tu dispositivo, ayudándote a mantener tus finanzas bajo control sin complicaciones.
-      </p>
-      <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
-    </div>
+
+<!-- Ventana Emergente de Ayuda -->
+<div id="modalAyuda" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 2000;">
+  <div style="background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid #334155;">
+    <h3 style="margin-top: 0; color: #f8fafc;">¿Para qué sirve esta app?</h3>
+    <p style="color: #94a3b8; font-size: 14px; line-height: 1.5;">
+      Esta es tu microapp de control financiero rápido. Te permite registrar tus gastos diarios y mensuales al instante en córdobas (C$), de forma local y privada en tu dispositivo con un diseño oscuro y cómodo para la vista.
+    </p>
+    <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
   </div>
-<!-- BANNER INFERIOR FIJO -->
+</div>
+
+<!-- Banner inferior -->
 <div class="ad-banner-container">
-  <!-- Aquí va el código script de tu proveedor de publicidad (Ej. AdSense) -->
   <div class="ad-placeholder">📢 Espacio reservado para Banner (320x50)</div>
 </div>
 
@@ -138,16 +149,16 @@
       const li = document.createElement('li');
       li.innerHTML = `
         <div>
-          <strong>${gasto.categoria}</strong> - $${gasto.monto.toFixed(2)}<br>
-          <small style="color:#94a3b8">${new Date(gasto.fecha).toLocaleDateString()} ${new Date(gasto.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+          <strong style="color: #f8fafc">${gasto.categoria}</strong> - <span style="color: #38bdf8">C$${gasto.monto.toFixed(2)}</span><br>
+          <small style="color:#64748b">${new Date(gasto.fecha).toLocaleDateString()} ${new Date(gasto.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
         </div>
         <button class="btn-del" onclick="eliminarGasto(${realIndex})">✕</button>
       `;
       lista.appendChild(li);
     });
 
-    document.getElementById('totalHoy').innerText = `$${hoyTotal.toFixed(2)}`;
-    document.getElementById('totalMes').innerText = `$${mesTotal.toFixed(2)}`;
+    document.getElementById('totalHoy').innerText = `C$${hoyTotal.toFixed(2)}`;
+    document.getElementById('totalMes').innerText = `C$${mesTotal.toFixed(2)}`;
   }
 
   form.addEventListener('submit', (e) => {
@@ -166,18 +177,19 @@
     gastos.splice(index, 1);
     guardarYRenderear();
   }
-function toggleAyuda() {
+
+  function toggleAyuda() {
     const modal = document.getElementById('modalAyuda');
     modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
   }
 
-  // Opcional: Cerrar si hacen clic fuera de la ventana blanca
   window.onclick = function(event) {
     const modal = document.getElementById('modalAyuda');
     if (event.target === modal) {
       modal.style.display = 'none';
     }
   }
+
   actualizarVista();
 </script>
 
