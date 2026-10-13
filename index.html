@@ -243,7 +243,7 @@
   <div style="background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid #334155;">
     <h3 id="modalTitulo" style="margin-top: 0; color: #f8fafc;">¿Cómo instalar esta App?</h3>
     <p id="modalTexto" style="color: #94a3b8; font-size: 14px; line-height: 1.5;">
-      Puedes instalar esta app directamente en tu dispositivo.
+      Puedes instalar esta microapp directamente en tu dispositivo sin ir a la tienda de aplicaciones.
     </p>
     <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
   </div>
@@ -371,4 +371,80 @@
     gastos.forEach(gasto => {
       const gFecha = new Date(gasto.fecha);
       if (gasto.fecha.split('T')[0] === hoyStr) {
-        hoyTotal += gasto.m
+        hoyTotal += gasto.monto;
+      }
+      if (gFecha.getMonth() === mesActual && gFecha.getFullYear() === anioActual) {
+        mesTotal += gasto.monto;
+      }
+    });
+
+    gastosFiltrados.slice().reverse().forEach((gasto) => {
+      const realIndex = gastos.indexOf(gasto);
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div>
+          <strong style="color: #f8fafc">${gasto.categoria}</strong> - <span style="color: #38bdf8">C$${gasto.monto.toFixed(2)}</span><br>
+          <small style="color:#64748b">${new Date(gasto.fecha).toLocaleDateString()} ${new Date(gasto.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+        </div>
+        <button class="btn-del" onclick="eliminarGasto(${realIndex})">✕</button>
+      `;
+      lista.appendChild(li);
+    });
+
+    document.getElementById('totalHoy').innerText = `C$${hoyTotal.toFixed(2)}`;
+    document.getElementById('totalMes').innerText = `C$${mesTotal.toFixed(2)}`;
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const monto = parseFloat(document.getElementById('monto').value);
+    const categoria = document.getElementById('categoria').value;
+
+    if (monto > 0) {
+      gastos.push({ monto, categoria, fecha: new Date().toISOString() });
+      document.getElementById('monto').value = '';
+      guardarYRenderear();
+    }
+  });
+
+  function eliminarGasto(index) {
+    gastos.splice(index, 1);
+    guardarYRenderear();
+  }
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('active');
+    document.getElementById('overlay').classList.toggle('active');
+  }
+
+  function filtrarGastos(criterio, textoTitulo, elementoBtn) {
+    filtroActual = criterio;
+    document.getElementById('filtroTitulo').innerText = textoTitulo;
+    
+    document.querySelectorAll('.sidebar-menu-btn').forEach(btn => btn.classList.remove('active'));
+    if (elementoBtn) elementoBtn.classList.add('active');
+
+    toggleSidebar();
+    actualizarVista();
+  }
+
+  function toggleAyuda() {
+    document.getElementById('modalTitulo').innerText = '¿Para qué sirve esta app?';
+    document.getElementById('modalTexto').innerHTML = 'Esta es tu microapp de control financiero rápido. Te permite registrar tus gastos diarios y mensuales al instante en córdobas (C$), de forma local y privada en tu dispositivo.';
+    const modal = document.getElementById('modalAyuda');
+    modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+  }
+
+  window.onclick = function(event) {
+    const modal = document.getElementById('modalAyuda');
+    if (event.target === modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  renderizarCategorias();
+  actualizarVista();
+</script>
+
+</body>
+</html>
