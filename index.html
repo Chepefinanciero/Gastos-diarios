@@ -30,10 +30,28 @@
     h3 { color: #cbd5e1; font-size: 15px; margin-top: 20px; margin-bottom: 10px; }
     
     .header-app { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .header-buttons { display: flex; gap: 8px; }
+    .header-buttons { display: flex; gap: 8px; align-items: center; }
     
     .btn-icon { background: #334155; color: #cbd5e1; border: none; border-radius: 50%; width: 34px; height: 34px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
     .btn-icon:hover { background: #475569; }
+
+    /* BOTÓN DE AYUDA CON MÁS PROTAGONISMO */
+    .btn-ayuda-hero {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+      transition: transform 0.2s;
+    }
+    .btn-ayuda-hero:active { transform: scale(0.95); }
 
     /* BANNER DE INSTALACIÓN */
     .install-banner {
@@ -206,7 +224,7 @@
 
     #filtroTitulo { font-size: 13px; color: #38bdf8; margin-bottom: 10px; font-weight: 500; }
 
-    /* MODAL PERSONALIZADO ELEGANTE */
+    /* MODAL PERSONALIZADO UNIVERSAL */
     .custom-modal-bg {
       display: none;
       position: fixed;
@@ -234,6 +252,31 @@
     .custom-modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 14px; }
     .btn-modal-cancel { background: #334155; color: #cbd5e1; }
     .btn-modal-ok { background: #3b82f6; color: white; }
+
+    /* PANTALLA COMPLETA: CENTRO DE AYUDA */
+    .help-page {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: #0f172a;
+      z-index: 5000;
+      overflow-y: auto;
+      padding: 20px 16px 80px 16px;
+    }
+    .help-header {
+      display: flex; justify-content: space-between; align-items: center;
+      max-width: 420px; margin: 0 auto 20px auto;
+      border-bottom: 1px solid #334155; padding-bottom: 12px;
+    }
+    .help-content { max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+    .help-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .help-card h4 { margin: 0 0 8px 0; color: #38bdf8; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+    .help-card p { margin: 0; color: #cbd5e1; font-size: 13.5px; line-height: 1.5; }
 
     /* Banner publicitario */
     .ad-banner-container {
@@ -285,7 +328,9 @@
       <h2>Control Express Pro</h2>
     </div>
     <div class="header-buttons">
-      <button class="btn-icon" onclick="toggleAyuda()">?</button>
+      <button class="btn-ayuda-hero" onclick="togglePaginaAyuda()">
+        <span>?</span> Ayuda
+      </button>
     </div>
   </div>
 
@@ -347,7 +392,43 @@
   <ul id="listaGastos"></ul>
 </div>
 
-<!-- MODAL PERSONALIZADO UNIVERSAL (Reemplaza los "prompt" feos del navegador) -->
+<!-- NUEVO CENTRO DE AYUDA Y GUÍA COMPLETA -->
+<div id="helpPage" class="help-page">
+  <div class="help-header">
+    <h2 style="margin:0;">📖 Centro de Ayuda</h2>
+    <button class="btn-icon" onclick="togglePaginaAyuda()">✕</button>
+  </div>
+  <div class="help-content">
+    <div class="help-card">
+      <h4>🎯 Presupuesto Mensual</h4>
+      <p>Abre el menú lateral (☰) y selecciona <strong>"Ajustar Presupuesto Mensual"</strong>. La barra superior cambiará de verde a amarillo y rojo según lo que hayas gastado, indicándote tu disponible en tiempo real.</p>
+    </div>
+
+    <div class="help-card">
+      <h4>💳 Registro y Métodos de Pago</h4>
+      <p>Ingresa el monto en córdobas (C$), elige la categoría y selecciona si pagaste con <strong>Efectivo</strong>, <strong>Tarjeta</strong> o <strong>Transferencia</strong> para mantener tus registros conciliados con tus cuentas.</p>
+    </div>
+
+    <div class="help-card">
+      <h4>📂 Categorías y Secciones Personalizadas</h4>
+      <p>Puedes agregar una nueva categoría seleccionando <strong>"➕ Agregar nueva categoría..."</strong> en el desplegable del formulario. Para carpetas de meses o proyectos, usa el botón <strong>"➕ Agregar Mes/Año"</strong> dentro del menú lateral.</p>
+    </div>
+
+    <div class="help-card">
+      <h4>📊 Gráfico de Distribución</h4>
+      <p>La barra de colores calcula automáticamente el porcentaje de tus fondos consumido por cada categoría para que identifiques de un vistazo en qué estás gastando más.</p>
+    </div>
+
+    <div class="help-card">
+      <h4>📊 Exportación e Importación de Datos</h4>
+      <p>Desde el menú lateral puedes descargar un archivo ejecutable para Excel (CSV) o guardar una <strong>Copia de Seguridad (JSON)</strong> para migrar tu información entre dispositivos de manera segura.</p>
+    </div>
+
+    <button onclick="togglePaginaAyuda()" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">Volver a la App</button>
+  </div>
+</div>
+
+<!-- MODAL PERSONALIZADO UNIVERSAL -->
 <div id="customModal" class="custom-modal-bg">
   <div class="custom-modal-box">
     <h3 id="modalPromptTitulo">Título</h3>
@@ -357,19 +438,6 @@
       <button class="btn-modal-cancel" onclick="cerrarCustomModal(false)">Cancelar</button>
       <button class="btn-modal-ok" onclick="cerrarCustomModal(true)">Guardar</button>
     </div>
-  </div>
-</div>
-
-<!-- Ventana Emergente de Ayuda -->
-<div id="modalAyuda" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 2000;">
-  <div style="background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid #334155;">
-    <h3 id="modalAyudaTitulo" style="margin-top: 0; color: #f8fafc;">Novedades de la App Pro</h3>
-    <p id="modalAyudaTexto" style="color: #94a3b8; font-size: 13.5px; line-height: 1.5;">
-      • ✨ <strong>Diseño Elegante:</strong> Ahora las ventanas para ingresar datos combinan perfectamente con el modo oscuro de tu app.<br>
-      • 📂 <strong>Gestionar Secciones:</strong> Edita o elimina secciones desde el menú lateral.<br>
-      • 🎯 <strong>Presupuesto y Gráficas:</strong> Controla tus límites y visualiza tus gastos al instante.
-    </p>
-    <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
   </div>
 </div>
 
@@ -395,7 +463,13 @@
   const selectCat = document.getElementById('categoria');
   const containerPeriodosSidebar = document.getElementById('listaPeriodosSidebar');
 
-  // FUNCIÓN PARA MOSTRAR EL MODAL PERSONALIZADO EN VEZ DE PROMPT
+  // CONTROL DEL CENTRO DE AYUDA EN PANTALLA COMPLETA
+  function togglePaginaAyuda() {
+    const page = document.getElementById('helpPage');
+    page.style.display = page.style.display === 'block' ? 'none' : 'block';
+  }
+
+  // MODAL PROMPT CUSTOM
   function mostrarPromptCustom(titulo, descripcion, valorInicial, tipoInput, callback) {
     document.getElementById('modalPromptTitulo').innerText = titulo;
     document.getElementById('modalPromptDesc').innerText = descripcion;
@@ -417,7 +491,6 @@
     modalCallback = null;
   }
 
-  // Permitir presionar ENTER para guardar en el modal
   document.getElementById('modalPromptInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       cerrarCustomModal(true);
@@ -446,17 +519,7 @@
   }
 
   function mostrarInstruccionesInstalacion() {
-    const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const esiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    document.getElementById('modalAyudaTitulo').innerText = '📲 Cómo instalar la App';
-    if (esiOS) {
-      document.getElementById('modalAyudaTexto').innerHTML = '<strong>En iPhone / iPad:</strong><br>1. Toca <strong>Compartir</strong> en Safari.<br>2. Elige <strong>"Agregar a la pantalla de inicio"</strong>.';
-    } else if (esMovil) {
-      document.getElementById('modalAyudaTexto').innerHTML = '<strong>En Android:</strong><br>1. Toca los <strong>3 puntos</strong> en Chrome.<br>2. Elige <strong>"Instalar aplicación"</strong>.';
-    } else {
-      document.getElementById('modalAyudaTexto').innerHTML = '<strong>En PC:</strong><br>1. Haz clic en el icono de instalar en la barra superior del navegador.<br>2. O abre la app desde tu celular.';
-    }
-    document.getElementById('modalAyuda').style.display = 'flex';
+    togglePaginaAyuda();
   }
 
   // CATEGORÍAS
@@ -848,20 +911,6 @@
 
     toggleSidebar();
     actualizarVista();
-  }
-
-  function toggleAyuda() {
-    document.getElementById('modalAyudaTitulo').innerText = 'Novedades de la App Pro';
-    document.getElementById('modalAyudaTexto').innerHTML = '• ✨ <strong>Diseño Elegante:</strong> Las ventanas emergentes ahora combinan con el modo oscuro.<br>• 📂 <strong>Gestionar Secciones:</strong> Edita o elimina secciones desde el menú lateral.<br>• 🎯 <strong>Presupuesto y Gráficas:</strong> Controla tus límites y visualiza tus gastos al instante.';
-    const modal = document.getElementById('modalAyuda');
-    modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
-  }
-
-  window.onclick = function(event) {
-    const modal = document.getElementById('modalAyuda');
-    if (event.target === modal) {
-      modal.style.display = 'none';
-    }
   }
 
   renderizarCategoriasSelect();
