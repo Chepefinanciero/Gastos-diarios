@@ -2,13 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Mi Control de Gastos</title>
   <link rel="manifest" href="manifest.json">
   <style>
     * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { 
-      background: #0f172a; /* Fondo general oscuro y discreto */
+      background: #0f172a; 
       color: #f8fafc;
       margin: 0; 
       padding: 16px; 
@@ -17,30 +17,86 @@
       justify-content: center; 
     }
     .app { 
-      background: #1e293b; /* Tarjeta principal estilo Slate */
+      background: #1e293b; 
       max-width: 400px; 
       width: 100%; 
       border-radius: 16px; 
       padding: 20px; 
       box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
     }
-    h2 { margin: 0; color: #f8fafc; }
-    h3 { color: #cbd5e1; }
+    h2 { margin: 0; color: #f8fafc; font-size: 20px; }
+    h3 { color: #cbd5e1; font-size: 16px; }
+    
     .header-app { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .btn-ayuda { background: #334155; color: #cbd5e1; border: none; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .btn-ayuda:hover { background: #475569; }
+    .header-buttons { display: flex; gap: 8px; }
+    
+    .btn-icon { background: #334155; color: #cbd5e1; border: none; border-radius: 50%; width: 34px; height: 34px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .btn-icon:hover { background: #475569; }
+
+    /* BARRA LATERAL (SIDEBAR) */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 260px;
+      height: 100%;
+      background: #1e293b;
+      transition: left 0.3s ease;
+      z-index: 3000;
+      padding: 20px;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .sidebar.active { left: 0; }
+    .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+    .sidebar-header h3 { margin: 0; color: #f8fafc; }
+    .sidebar-menu-btn {
+      background: #334155;
+      color: #f8fafc;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: left;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .sidebar-menu-btn:hover, .sidebar-menu-btn.active { background: #3b82f6; color: white; }
+
+    /* Fondo oscuro al abrir el menú */
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 2500;
+    }
+    .overlay.active { display: block; }
+
     .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
     .card { background: #334155; padding: 12px; border-radius: 10px; text-align: center; }
-    .card span { font-size: 12px; color: #94a3b8; font-weight: bold; }
-    .card div { font-size: 18px; font-weight: bold; color: #f8fafc; margin-top: 4px; }
+    .card span { font-size: 11px; color: #94a3b8; font-weight: bold; }
+    .card div { font-size: 16px; font-weight: bold; color: #f8fafc; margin-top: 4px; }
+    
     form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
     input, select, button { padding: 12px; border-radius: 8px; border: 1px solid #475569; font-size: 16px; background: #0f172a; color: #f8fafc; }
     input::placeholder { color: #64748b; }
     button[type="submit"] { background: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; }
     button[type="submit"]:active { background: #2563eb; }
-    ul { list-style: none; padding: 0; margin: 0; }
+    
+    ul { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
     li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #334155; color: #e2e8f0; }
     .btn-del { background: none; border: none; color: #f87171; font-size: 14px; cursor: pointer; padding: 4px 8px; }
+
+    /* Indicador de filtro activo */
+    #filtroTitulo { font-size: 13px; color: #38bdf8; margin-bottom: 10px; font-weight: 500; }
 
     /* Banner inferior */
     .ad-banner-container {
@@ -68,10 +124,35 @@
 </head>
 <body>
 
+<!-- Fondo oscuro difuminado para el menú lateral -->
+<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+<!-- MENÚ LATERAL (SIDEBAR) -->
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <h3>📂 Organizar Gastos</h3>
+    <button class="btn-icon" onclick="toggleSidebar()" style="width: 28px; height: 28px; font-size: 12px;">✕</button>
+  </div>
+  <p style="font-size: 12px; color: #94a3b8; margin: 0;">Filtrar historial por:</p>
+  
+  <button class="sidebar-menu-btn active" onclick="filtrarGastos('todos', 'Mostrando: Todos los gastos')">📋 Ver Todos</button>
+  <button class="sidebar-menu-btn" onclick="filtrarGastos('mes_actual', 'Mostrando: Mes Actual')">📅 Este Mes</button>
+  <hr style="border: 0; border-top: 1px solid #334155; margin: 5px 0;">
+  <button class="sidebar-menu-btn" onclick="filtrarGastos('Comida', 'Categoría: Comida')">🍔 Comida</button>
+  <button class="sidebar-menu-btn" onclick="filtrarGastos('Transporte', 'Categoría: Transporte')">🚌 Transporte</button>
+  <button class="sidebar-menu-btn" onclick="filtrarGastos('Servicios', 'Categoría: Servicios')">💡 Servicios</button>
+  <button class="sidebar-menu-btn" onclick="filtrarGastos('Varios', 'Categoría: Varios')">📦 Varios</button>
+</div>
+
 <div class="app">
   <div class="header-app">
-    <h2>Control Express</h2>
-    <button class="btn-ayuda" onclick="toggleAyuda()">?</button>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button class="btn-icon" onclick="toggleSidebar()">☰</button>
+      <h2>Control Express</h2>
+    </div>
+    <div class="header-buttons">
+      <button class="btn-icon" onclick="toggleAyuda()">?</button>
+    </div>
   </div>
   
   <div class="cards">
@@ -96,6 +177,7 @@
     <button type="submit">+ Registrar Gasto</button>
   </form>
 
+  <div id="filtroTitulo">Mostrando: Todos los gastos</div>
   <h3>Historial Reciente</h3>
   <ul id="listaGastos"></ul>
 </div>
@@ -103,9 +185,9 @@
 <!-- Ventana Emergente de Ayuda -->
 <div id="modalAyuda" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 2000;">
   <div style="background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid #334155;">
-    <h3 style="margin-top: 0; color: #f8fafc;">¿Para qué sirve esta app?</h3>
+    <h3 style="margin-top: 0; color: #f8fafc;">¿Cómo usar el menú lateral?</h3>
     <p style="color: #94a3b8; font-size: 14px; line-height: 1.5;">
-      Esta es tu microapp de control financiero rápido. Te permite registrar tus gastos diarios y mensuales al instante en córdobas (C$), de forma local y privada en el dispositivo que mas te convenga
+      Toca el botón de las tres líneas (☰) arriba a la izquierda para abrir el menú de organización. Desde ahí puedes filtrar tus registros por el mes actual o por categorías específicas al instante.
     </p>
     <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
   </div>
@@ -118,6 +200,7 @@
 
 <script>
   let gastos = JSON.parse(localStorage.getItem('mis_gastos')) || [];
+  let filtroActual = 'todos';
 
   const form = document.getElementById('gastoForm');
   const lista = document.getElementById('listaGastos');
@@ -136,17 +219,31 @@
     let hoyTotal = 0;
     let mesTotal = 0;
 
-    gastos.slice().reverse().forEach((gasto, index) => {
+    // Filtrar la lista según la opción seleccionada en el menú lateral
+    let gastosFiltrados = gastos.filter(gasto => {
       const gFecha = new Date(gasto.fecha);
-      
+      if (filtroActual === 'mes_actual') {
+        return gFecha.getMonth() === mesActual && gFecha.getFullYear() === anioActual;
+      } else if (filtroActual !== 'todos') {
+        return gasto.categoria === filtroActual;
+      }
+      return true;
+    });
+
+    // Calcular siempre los totales generales (independientemente del filtro visual)
+    gastos.forEach(gasto => {
+      const gFecha = new Date(gasto.fecha);
       if (gasto.fecha.split('T')[0] === hoyStr) {
         hoyTotal += gasto.monto;
       }
       if (gFecha.getMonth() === mesActual && gFecha.getFullYear() === anioActual) {
         mesTotal += gasto.monto;
       }
+    });
 
-      const realIndex = gastos.length - 1 - index;
+    gastosFiltrados.slice().reverse().forEach((gasto) => {
+      // Encontrar el índice real en el array principal para poder borrar correctamente
+      const realIndex = gastos.indexOf(gasto);
       const li = document.createElement('li');
       li.innerHTML = `
         <div>
@@ -177,6 +274,23 @@
   function eliminarGasto(index) {
     gastos.splice(index, 1);
     guardarYRenderear();
+  }
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('active');
+    document.getElementById('overlay').classList.toggle('active');
+  }
+
+  function filtrarGastos(criterio, textoTitulo) {
+    filtroActual = criterio;
+    document.getElementById('filtroTitulo').innerText = textoTitulo;
+    
+    // Actualizar estilo visual de los botones del menú
+    document.querySelectorAll('.sidebar-menu-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    toggleSidebar();
+    actualizarVista();
   }
 
   function toggleAyuda() {
