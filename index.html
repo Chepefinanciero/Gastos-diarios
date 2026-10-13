@@ -97,7 +97,6 @@
     }
     .sidebar-menu-btn:hover, .sidebar-menu-btn.active { background: #3b82f6; color: white; }
 
-    /* CORRECCIÓN: FILA DE PERIODO CON TAMAÑO FIJO PARA BOTONES */
     .period-item-row {
       display: flex;
       align-items: center;
@@ -105,8 +104,8 @@
       width: 100%;
     }
     .period-item-row .sidebar-menu-btn {
-      flex: 1; /* Ocupa todo el espacio restante */
-      min-width: 0; /* Permite que el texto se recorte si es muy largo */
+      flex: 1;
+      min-width: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -123,7 +122,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0; /* Evita que el botón se reduzca o expanda de más */
+      flex-shrink: 0;
     }
     .btn-period-action:hover { background: #475569; }
     
@@ -160,7 +159,7 @@
     .card span { font-size: 11px; color: #94a3b8; font-weight: bold; }
     .card div { font-size: 16px; font-weight: bold; color: #f8fafc; margin-top: 4px; }
 
-    /* SECCIÓN DE PRESUPUESTO */
+    /* PRESUPUESTO */
     .budget-container {
       background: #0f172a;
       border: 1px solid #334155;
@@ -173,7 +172,7 @@
     .budget-bar-fill { background: #10b981; height: 100%; width: 0%; transition: width 0.4s ease, background-color 0.4s ease; }
     .budget-info { display: flex; justify-content: space-between; font-size: 11px; margin-top: 6px; color: #cbd5e1; }
 
-    /* SECCIÓN DE GRÁFICO POR CATEGORÍA */
+    /* GRÁFICO POR CATEGORÍA */
     .chart-box { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px; margin-bottom: 20px; }
     .bar-chart-multi { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: #334155; margin: 8px 0; }
     .chart-segment { height: 100%; transition: width 0.3s; }
@@ -207,28 +206,44 @@
 
     #filtroTitulo { font-size: 13px; color: #38bdf8; margin-bottom: 10px; font-weight: 500; }
 
+    /* MODAL PERSONALIZADO ELEGANTE */
+    .custom-modal-bg {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center; align-items: center;
+      z-index: 4000;
+    }
+    .custom-modal-box {
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 22px;
+      border-radius: 14px;
+      max-width: 320px; width: 90%;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.5);
+      border: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .custom-modal-box h3 { margin: 0; color: #f8fafc; font-size: 16px; }
+    .custom-modal-box p { margin: 0; color: #94a3b8; font-size: 13px; line-height: 1.4; }
+    .custom-modal-box input { background: #0f172a; border: 1px solid #475569; color: #f8fafc; padding: 10px; border-radius: 8px; font-size: 15px; width: 100%; }
+    .custom-modal-buttons { display: flex; gap: 8px; margin-top: 4px; }
+    .custom-modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 14px; }
+    .btn-modal-cancel { background: #334155; color: #cbd5e1; }
+    .btn-modal-ok { background: #3b82f6; color: white; }
+
     /* Banner publicitario */
     .ad-banner-container {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 65px;
-      background: #1e293b;
-      border-top: 1px solid #334155;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+      bottom: 0; left: 0; width: 100%; height: 65px;
+      background: #1e293b; border-top: 1px solid #334155;
+      display: flex; justify-content: center; align-items: center;
+      z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
     }
-    .ad-placeholder {
-      font-size: 12px;
-      color: #94a3b8;
-      border: 1px dashed #475569;
-      padding: 10px 20px;
-      border-radius: 6px;
-    }
+    .ad-placeholder { font-size: 12px; color: #94a3b8; border: 1px dashed #475569; padding: 10px 20px; border-radius: 6px; }
   </style>
 </head>
 <body>
@@ -248,12 +263,12 @@
   <button class="sidebar-menu-btn" onclick="filtrarPorPeriodo('anio_actual', 'Mostrando: Este Año', this)">🎆 Año Actual</button>
   
   <div id="listaPeriodosSidebar" style="display: flex; flex-direction: column; gap: 6px;"></div>
-  <button class="sidebar-menu-btn" onclick="agregarNuevoPeriodo()" style="background: #334155; border: 1px dashed #475569; text-align: center;">➕ Agregar Mes/Año</button>
+  <button class="sidebar-menu-btn" onclick="abrirModalPeriodo()" style="background: #334155; border: 1px dashed #475569; text-align: center;">➕ Agregar Mes/Año</button>
   
   <hr style="border: 0; border-top: 1px solid #334155; margin: 4px 0;">
   
   <span style="font-size: 12px; color: #94a3b8;">Ajustes y Exportación:</span>
-  <button class="sidebar-menu-btn" onclick="configurarPresupuesto()">🎯 Ajustar Presupuesto Mensual</button>
+  <button class="sidebar-menu-btn" onclick="abrirModalPresupuesto()">🎯 Ajustar Presupuesto Mensual</button>
   <button class="btn-action-sidebar" onclick="exportarExcel()" style="background: #10b981;">📊 Exportar Historial a Excel (CSV)</button>
   <button class="btn-action-sidebar" onclick="exportarRespaldoJSON()" style="background: #0284c7;">💾 Crear Copia de Seguridad</button>
   <button class="btn-action-sidebar" onclick="document.getElementById('inputRestaurar').click()" style="background: #4f46e5;">📥 Restaurar Copia de Seguridad</button>
@@ -332,15 +347,27 @@
   <ul id="listaGastos"></ul>
 </div>
 
+<!-- MODAL PERSONALIZADO UNIVERSAL (Reemplaza los "prompt" feos del navegador) -->
+<div id="customModal" class="custom-modal-bg">
+  <div class="custom-modal-box">
+    <h3 id="modalPromptTitulo">Título</h3>
+    <p id="modalPromptDesc">Descripción</p>
+    <input type="text" id="modalPromptInput" placeholder="Escribe aquí...">
+    <div class="custom-modal-buttons">
+      <button class="btn-modal-cancel" onclick="cerrarCustomModal(false)">Cancelar</button>
+      <button class="btn-modal-ok" onclick="cerrarCustomModal(true)">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Ventana Emergente de Ayuda -->
 <div id="modalAyuda" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 2000;">
   <div style="background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 12px; max-width: 320px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid #334155;">
-    <h3 id="modalTitulo" style="margin-top: 0; color: #f8fafc;">Novedades de la App Pro</h3>
-    <p id="modalTexto" style="color: #94a3b8; font-size: 13.5px; line-height: 1.5;">
-      • 📂 <strong>Gestionar Secciones:</strong> Puedes editar (✏️) o eliminar (✕) las secciones personalizadas del menú lateral.<br>
-      • 🎯 <strong>Presupuesto:</strong> Define una meta mensual desde el menú lateral para saber cuánto dinero te queda.<br>
-      • 💳 <strong>Método de Pago:</strong> Clasifica si pagaste en Efectivo, Tarjeta o Transferencia.<br>
-      • 📊 <strong>Gráfica:</strong> Revisa qué porcentaje de tu dinero se va en cada categoría.
+    <h3 id="modalAyudaTitulo" style="margin-top: 0; color: #f8fafc;">Novedades de la App Pro</h3>
+    <p id="modalAyudaTexto" style="color: #94a3b8; font-size: 13.5px; line-height: 1.5;">
+      • ✨ <strong>Diseño Elegante:</strong> Ahora las ventanas para ingresar datos combinan perfectamente con el modo oscuro de tu app.<br>
+      • 📂 <strong>Gestionar Secciones:</strong> Edita o elimina secciones desde el menú lateral.<br>
+      • 🎯 <strong>Presupuesto y Gráficas:</strong> Controla tus límites y visualiza tus gastos al instante.
     </p>
     <button onclick="toggleAyuda()" style="width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Entendido</button>
   </div>
@@ -360,12 +387,42 @@
   
   let filtroPeriodo = 'todos'; 
   let deferredPrompt = null;
+  let modalCallback = null;
   const paletaColores = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316'];
 
   const form = document.getElementById('gastoForm');
   const lista = document.getElementById('listaGastos');
   const selectCat = document.getElementById('categoria');
   const containerPeriodosSidebar = document.getElementById('listaPeriodosSidebar');
+
+  // FUNCIÓN PARA MOSTRAR EL MODAL PERSONALIZADO EN VEZ DE PROMPT
+  function mostrarPromptCustom(titulo, descripcion, valorInicial, tipoInput, callback) {
+    document.getElementById('modalPromptTitulo').innerText = titulo;
+    document.getElementById('modalPromptDesc').innerText = descripcion;
+    const input = document.getElementById('modalPromptInput');
+    input.value = valorInicial || '';
+    input.type = tipoInput || 'text';
+    
+    document.getElementById('customModal').style.display = 'flex';
+    input.focus();
+    modalCallback = callback;
+  }
+
+  function cerrarCustomModal(confirmado) {
+    const input = document.getElementById('modalPromptInput');
+    document.getElementById('customModal').style.display = 'none';
+    if (confirmado && modalCallback) {
+      modalCallback(input.value);
+    }
+    modalCallback = null;
+  }
+
+  // Permitir presionar ENTER para guardar en el modal
+  document.getElementById('modalPromptInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      cerrarCustomModal(true);
+    }
+  });
 
   // INSTALACIÓN PWA
   window.addEventListener('beforeinstallprompt', (e) => {
@@ -391,13 +448,13 @@
   function mostrarInstruccionesInstalacion() {
     const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const esiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    document.getElementById('modalTitulo').innerText = '📲 Cómo instalar la App';
+    document.getElementById('modalAyudaTitulo').innerText = '📲 Cómo instalar la App';
     if (esiOS) {
-      document.getElementById('modalTexto').innerHTML = '<strong>En iPhone / iPad:</strong><br>1. Toca <strong>Compartir</strong> en Safari.<br>2. Elige <strong>"Agregar a la pantalla de inicio"</strong>.';
+      document.getElementById('modalAyudaTexto').innerHTML = '<strong>En iPhone / iPad:</strong><br>1. Toca <strong>Compartir</strong> en Safari.<br>2. Elige <strong>"Agregar a la pantalla de inicio"</strong>.';
     } else if (esMovil) {
-      document.getElementById('modalTexto').innerHTML = '<strong>En Android:</strong><br>1. Toca los <strong>3 puntos</strong> en Chrome.<br>2. Elige <strong>"Instalar aplicación"</strong>.';
+      document.getElementById('modalAyudaTexto').innerHTML = '<strong>En Android:</strong><br>1. Toca los <strong>3 puntos</strong> en Chrome.<br>2. Elige <strong>"Instalar aplicación"</strong>.';
     } else {
-      document.getElementById('modalTexto').innerHTML = '<strong>En PC:</strong><br>1. Haz clic en el icono de instalar en la barra superior del navegador.<br>2. O abre la app desde tu celular.';
+      document.getElementById('modalAyudaTexto').innerHTML = '<strong>En PC:</strong><br>1. Haz clic en el icono de instalar en la barra superior del navegador.<br>2. O abre la app desde tu celular.';
     }
     document.getElementById('modalAyuda').style.display = 'flex';
   }
@@ -422,33 +479,36 @@
 
   function verificarNuevaCategoria(selectElement) {
     if (selectElement.value === '__NUEVA__') {
-      const nuevaCat = prompt('Escribe el nombre de la nueva categoría (puedes incluir un emoji):');
-      if (nuevaCat && nuevaCat.trim() !== '') {
-        const nombreLimpio = nuevaCat.trim();
-        if (!categorias.includes(nombreLimpio)) {
-          categorias.push(nombreLimpio);
-          localStorage.setItem('mis_categorias', JSON.stringify(categorias));
+      mostrarPromptCustom('Nueva Categoría', 'Escribe el nombre de la nueva categoría (puedes incluir un emoji):', '', 'text', (valor) => {
+        if (valor && valor.trim() !== '') {
+          const nombreLimpio = valor.trim();
+          if (!categorias.includes(nombreLimpio)) {
+            categorias.push(nombreLimpio);
+            localStorage.setItem('mis_categorias', JSON.stringify(categorias));
+          }
+          renderizarCategoriasSelect();
+          selectCat.value = nombreLimpio;
+        } else {
+          selectCat.selectedIndex = 0;
         }
-        renderizarCategoriasSelect();
-        selectCat.value = nombreLimpio;
-      } else {
-        selectCat.selectedIndex = 0;
-      }
+      });
     }
   }
 
   // CONFIGURAR PRESUPUESTO
-  function configurarPresupuesto() {
+  function abrirModalPresupuesto() {
+    toggleSidebar();
     const actual = presupuestoMensual > 0 ? presupuestoMensual : '';
-    const valor = prompt('Ingresa tu presupuesto total para este mes en C$:', actual);
-    if (valor !== null && !isNaN(parseFloat(valor))) {
-      presupuestoMensual = parseFloat(valor);
-      localStorage.setItem('mi_presupuesto', presupuestoMensual);
-      actualizarVista();
-    }
+    mostrarPromptCustom('Presupuesto Mensual', 'Ingresa tu presupuesto total para este mes en C$:', actual, 'number', (valor) => {
+      if (valor !== null && !isNaN(parseFloat(valor))) {
+        presupuestoMensual = parseFloat(valor);
+        localStorage.setItem('mi_presupuesto', presupuestoMensual);
+        actualizarVista();
+      }
+    });
   }
 
-  // GESTIÓN DE PERIODOS EN LA BARRA LATERAL (CORREGIDO)
+  // GESTIÓN DE PERIODOS EN BARRA LATERAL
   function renderizarPeriodosSidebar() {
     containerPeriodosSidebar.innerHTML = '';
     periodosGuardados.forEach((per, index) => {
@@ -488,31 +548,33 @@
     });
   }
 
-  function agregarNuevoPeriodo() {
-    const inputMes = prompt('Escribe el nombre del nuevo periodo o sección (Ej. Octubre 2026, Vacaciones, etc.):');
-    if (inputMes && inputMes.trim() !== '') {
-      const nombreLimpio = inputMes.trim();
-      const nuevoKey = 'p_' + Date.now();
-      
-      periodosGuardados.push({ key: nuevoKey, nombre: nombreLimpio });
-      localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
-      renderizarPeriodosSidebar();
-    }
+  function abrirModalPeriodo() {
+    toggleSidebar();
+    mostrarPromptCustom('Nueva Sección', 'Escribe el nombre del periodo o sección (Ej. Octubre 2026, Vacaciones):', '', 'text', (valor) => {
+      if (valor && valor.trim() !== '') {
+        const nombreLimpio = valor.trim();
+        const nuevoKey = 'p_' + Date.now();
+        
+        periodosGuardados.push({ key: nuevoKey, nombre: nombreLimpio });
+        localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
+        renderizarPeriodosSidebar();
+      }
+    });
   }
 
   function editarPeriodo(index) {
     const periodoActual = periodosGuardados[index];
-    const nuevoNombre = prompt('Nuevo nombre para esta sección:', periodoActual.nombre);
-    
-    if (nuevoNombre && nuevoNombre.trim() !== '') {
-      periodosGuardados[index].nombre = nuevoNombre.trim();
-      localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
-      renderizarPeriodosSidebar();
-      
-      if (filtroPeriodo === periodoActual.key) {
-        document.getElementById('filtroTitulo').innerText = `Periodo: ${nuevoNombre.trim()}`;
+    mostrarPromptCustom('Renombrar Sección', 'Nuevo nombre para esta sección:', periodoActual.nombre, 'text', (valor) => {
+      if (valor && valor.trim() !== '') {
+        periodosGuardados[index].nombre = valor.trim();
+        localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
+        renderizarPeriodosSidebar();
+        
+        if (filtroPeriodo === periodoActual.key) {
+          document.getElementById('filtroTitulo').innerText = `Periodo: ${valor.trim()}`;
+        }
       }
-    }
+    });
   }
 
   function eliminarPeriodo(index) {
@@ -683,12 +745,12 @@
 
   function editarGasto(index) {
     const gastoActual = gastos[index];
-    const nuevoMonto = prompt(`Modificar monto para "${gastoActual.categoria}":`, gastoActual.monto);
-    
-    if (nuevoMonto !== null && !isNaN(parseFloat(nuevoMonto)) && parseFloat(nuevoMonto) > 0) {
-      gastos[index].monto = parseFloat(nuevoMonto);
-      guardarYRenderear();
-    }
+    mostrarPromptCustom('Modificar Gasto', `Modificar monto para "${gastoActual.categoria}":`, gastoActual.monto, 'number', (valor) => {
+      if (valor !== null && !isNaN(parseFloat(valor)) && parseFloat(valor) > 0) {
+        gastos[index].monto = parseFloat(valor);
+        guardarYRenderear();
+      }
+    });
   }
 
   function eliminarGasto(index) {
@@ -789,8 +851,8 @@
   }
 
   function toggleAyuda() {
-    document.getElementById('modalTitulo').innerText = 'Novedades de la App Pro';
-    document.getElementById('modalTexto').innerHTML = '• 📂 <strong>Gestionar Secciones:</strong> Puedes editar (✏️) o eliminar (✕) las secciones personalizadas del menú lateral.<br>• 🎯 <strong>Presupuesto:</strong> Define una meta mensual desde el menú lateral para saber cuánto dinero te queda.<br>• 💳 <strong>Método de Pago:</strong> Clasifica si pagaste en Efectivo, Tarjeta o Transferencia.<br>• 📊 <strong>Gráfica:</strong> Revisa qué porcentaje de tu dinero se va en cada categoría.';
+    document.getElementById('modalAyudaTitulo').innerText = 'Novedades de la App Pro';
+    document.getElementById('modalAyudaTexto').innerHTML = '• ✨ <strong>Diseño Elegante:</strong> Las ventanas emergentes ahora combinan con el modo oscuro.<br>• 📂 <strong>Gestionar Secciones:</strong> Edita o elimina secciones desde el menú lateral.<br>• 🎯 <strong>Presupuesto y Gráficas:</strong> Controla tus límites y visualiza tus gastos al instante.';
     const modal = document.getElementById('modalAyuda');
     modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
   }
