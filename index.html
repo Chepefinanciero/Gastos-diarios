@@ -16,7 +16,6 @@
       color: #f8fafc;
       margin: 0; 
       padding: 16px; 
-      /* Aumentamos el padding inferior para que el banner fijo no tape el contenido */
       padding-bottom: 95px; 
       display: flex; 
       justify-content: center; 
@@ -246,7 +245,7 @@
 
     #filtroTitulo { font-size: 13px; color: #38bdf8; margin-bottom: 10px; font-weight: 500; }
 
-    /* MODAL PERSONALIZADO ENTRADA DE TEXTO (PROMPT) */
+    /* MODAL PERSONALIZADO ENTRADA DE TEXTO (PROMPT) Y MULTIMONEDA */
     .custom-modal-bg {
       display: none;
       position: fixed;
@@ -260,7 +259,7 @@
       color: #f8fafc;
       padding: 22px;
       border-radius: 14px;
-      max-width: 320px; width: 90%;
+      max-width: 330px; width: 90%;
       box-shadow: 0 4px 25px rgba(0,0,0,0.5);
       border: 1px solid #334155;
       display: flex;
@@ -269,7 +268,33 @@
     }
     .custom-modal-box h3 { margin: 0; color: #f8fafc; font-size: 16px; }
     .custom-modal-box p { margin: 0; color: #94a3b8; font-size: 13px; line-height: 1.4; }
-    .custom-modal-box input { background: #0f172a; border: 1px solid #475569; color: #f8fafc; padding: 10px; border-radius: 8px; font-size: 15px; width: 100%; }
+    
+    .custom-modal-input-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .custom-modal-box input { 
+      background: #0f172a; 
+      border: 1px solid #475569; 
+      color: #f8fafc; 
+      padding: 10px; 
+      border-radius: 8px; 
+      font-size: 15px; 
+      width: 100%; 
+    }
+    .custom-modal-select-moneda {
+      background: #0f172a;
+      color: #38bdf8;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 10px 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      width: auto;
+      flex-shrink: 0;
+    }
     .custom-modal-buttons { display: flex; gap: 8px; margin-top: 4px; }
     .custom-modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 14px; }
     .btn-modal-cancel { background: #334155; color: #cbd5e1; }
@@ -305,9 +330,10 @@
     .ad-banner-container {
       position: fixed;
       bottom: 0; left: 0; width: 100%; height: 65px;
+      min-height: 65px;
       background: #1e293b; border-top: 1px solid #334155;
-      display: flex; justify-content: center; align-items: center;
-      z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+      display: flex !important; justify-content: center; align-items: center;
+      z-index: 10000; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
     }
     .ad-placeholder { font-size: 12px; color: #94a3b8; border: 1px dashed #475569; padding: 10px 20px; border-radius: 6px; }
   </style>
@@ -434,8 +460,8 @@
     </div>
 
     <div class="help-card">
-      <h4>🎯 Presupuesto Mensual</h4>
-      <p>Abre el menú lateral (☰) y selecciona <strong>"Ajustar Presupuesto Mensual"</strong> para definir tus metas financieras.</p>
+      <h4>🎯 Presupuesto Mensual Multimoneda</h4>
+      <p>Abre el menú lateral (☰) y selecciona <strong>"Ajustar Presupuesto Mensual"</strong>. Puedes ingresar el monto directamente en Córdobas (C$), Dólares ($) o Euros (€) mediante el selector integrado.</p>
     </div>
 
     <div class="help-card">
@@ -447,12 +473,21 @@
   </div>
 </div>
 
-<!-- MODAL PERSONALIZADO ENTRADA DE TEXTO (PROMPT) -->
+<!-- MODAL PERSONALIZADO ENTRADA DE TEXTO (PROMPT) CON SELECTOR DE MONEDA OPCIONAL -->
 <div id="customModal" class="custom-modal-bg">
   <div class="custom-modal-box">
     <h3 id="modalPromptTitulo">Título</h3>
     <p id="modalPromptDesc">Descripción</p>
-    <input type="text" id="modalPromptInput" placeholder="Escribe aquí...">
+    
+    <div class="custom-modal-input-group">
+      <input type="text" id="modalPromptInput" placeholder="Escribe aquí...">
+      <select id="modalPromptSelectMoneda" class="custom-modal-select-moneda" style="display: none;">
+        <option value="C$">C$</option>
+        <option value="$">$</option>
+        <option value="€">€</option>
+      </select>
+    </div>
+
     <div class="custom-modal-buttons">
       <button class="btn-modal-cancel" onclick="cerrarCustomModal(false)">Cancelar</button>
       <button class="btn-modal-ok" onclick="cerrarCustomModal(true)">Guardar</button>
@@ -530,7 +565,7 @@
 
   function configurarTasaCambio() {
     toggleSidebar();
-    mostrarPromptCustom('Tasa de Cambio Oficial', 'Ingresa cuántos Córdobas (C$) equivale a 1 Dólar ($):', tasaCambioUSD, 'number', (valor) => {
+    mostrarPromptCustom('Tasa de Cambio Oficial', 'Ingresa cuántos Córdobas (C$) equivale a 1 Dólar ($):', tasaCambioUSD, 'number', false, (valor) => {
       if (valor !== null && !isNaN(parseFloat(valor)) && parseFloat(valor) > 0) {
         tasaCambioUSD = parseFloat(valor);
         localStorage.setItem('tasa_usd', tasaCambioUSD);
@@ -555,13 +590,22 @@
     page.style.display = page.style.display === 'block' ? 'none' : 'block';
   }
 
-  function mostrarPromptCustom(titulo, descripcion, valorInicial, tipoInput, callback) {
+  function mostrarPromptCustom(titulo, descripcion, valorInicial, tipoInput, incluirSelectorMoneda, callback) {
     document.getElementById('modalPromptTitulo').innerText = titulo;
     document.getElementById('modalPromptDesc').innerText = descripcion;
     const input = document.getElementById('modalPromptInput');
+    const selectMonedaModal = document.getElementById('modalPromptSelectMoneda');
+
     input.value = valorInicial !== undefined && valorInicial !== null ? valorInicial : '';
     input.type = tipoInput || 'text';
     
+    if (incluirSelectorMoneda) {
+      selectMonedaModal.style.display = 'block';
+      selectMonedaModal.value = monedaActual;
+    } else {
+      selectMonedaModal.style.display = 'none';
+    }
+
     document.getElementById('customModal').style.display = 'flex';
     input.focus();
     modalCallback = callback;
@@ -569,9 +613,15 @@
 
   function cerrarCustomModal(confirmado) {
     const input = document.getElementById('modalPromptInput');
+    const selectMonedaModal = document.getElementById('modalPromptSelectMoneda');
     document.getElementById('customModal').style.display = 'none';
+
     if (confirmado && modalCallback) {
-      modalCallback(input.value);
+      if (selectMonedaModal.style.display !== 'none') {
+        modalCallback(input.value, selectMonedaModal.value);
+      } else {
+        modalCallback(input.value);
+      }
     }
     modalCallback = null;
   }
@@ -658,7 +708,7 @@
 
   function verificarNuevaCategoria(selectElement) {
     if (selectElement.value === '__NUEVA__') {
-      mostrarPromptCustom('Nueva Categoría', 'Escribe el nombre de la nueva categoría (puedes incluir un emoji):', '', 'text', (valor) => {
+      mostrarPromptCustom('Nueva Categoría', 'Escribe el nombre de la nueva categoría (puedes incluir un emoji):', '', 'text', false, (valor) => {
         if (valor && valor.trim() !== '') {
           const nombreLimpio = valor.trim();
           if (!categorias.includes(nombreLimpio)) {
@@ -679,11 +729,11 @@
     const presupuestoActualEnMoneda = convertirDesdeNIO(presupuestoMensualNIO, monedaActual);
     const actual = presupuestoActualEnMoneda > 0 ? presupuestoActualEnMoneda.toFixed(2) : '';
     
-    mostrarPromptCustom('Presupuesto Mensual', `Ingresa tu presupuesto total en (${monedaActual}):`, actual, 'number', (valor) => {
+    mostrarPromptCustom('Presupuesto Mensual', 'Ingresa tu presupuesto total y selecciona la moneda:', actual, 'number', true, (valor, monedaElegida) => {
       if (valor !== null && valor !== '') {
         const numVal = parseFloat(valor);
         if (!isNaN(numVal)) {
-          presupuestoMensualNIO = convertirHaciaNIO(numVal, monedaActual);
+          presupuestoMensualNIO = convertirHaciaNIO(numVal, monedaElegida);
           localStorage.setItem('mi_presupuesto_nio', presupuestoMensualNIO);
           actualizarVista();
         }
@@ -732,7 +782,7 @@
 
   function abrirModalPeriodo() {
     toggleSidebar();
-    mostrarPromptCustom('Nueva Sección', 'Escribe el nombre del periodo o sección (Ej. Octubre 2026, Vacaciones):', '', 'text', (valor) => {
+    mostrarPromptCustom('Nueva Sección', 'Escribe el nombre del periodo o sección (Ej. Octubre 2026, Vacaciones):', '', 'text', false, (valor) => {
       if (valor && valor.trim() !== '') {
         const nombreLimpio = valor.trim();
         const nuevoKey = 'p_' + Date.now();
@@ -746,7 +796,7 @@
 
   function editarPeriodo(index) {
     const periodoActual = periodosGuardados[index];
-    mostrarPromptCustom('Renombrar Sección', 'Nuevo nombre para esta sección:', periodoActual.nombre, 'text', (valor) => {
+    mostrarPromptCustom('Renombrar Sección', 'Nuevo nombre para esta sección:', periodoActual.nombre, 'text', false, (valor) => {
       if (valor && valor.trim() !== '') {
         periodosGuardados[index].nombre = valor.trim();
         localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
@@ -938,7 +988,7 @@
     const gastoActual = gastos[index];
     const montoEnMonedaActual = convertirDesdeNIO(gastoActual.montoNIO, monedaActual);
     
-    mostrarPromptCustom('Modificar Gasto', `Modificar monto (${monedaActual}) para "${gastoActual.categoria}":`, montoEnMonedaActual.toFixed(2), 'number', (valor) => {
+    mostrarPromptCustom('Modificar Gasto', `Modificar monto (${monedaActual}) para "${gastoActual.categoria}":`, montoEnMonedaActual.toFixed(2), 'number', false, (valor) => {
       if (valor !== null && valor !== '') {
         const numVal = parseFloat(valor);
         if (!isNaN(numVal) && numVal > 0) {
