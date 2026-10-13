@@ -35,7 +35,7 @@
     .btn-icon { background: #334155; color: #cbd5e1; border: none; border-radius: 50%; width: 34px; height: 34px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
     .btn-icon:hover { background: #475569; }
 
-    /* BOTÓN DE AYUDA CON MÁS PROTAGONISMO */
+    /* BOTÓN DE AYUDA HERO */
     .btn-ayuda-hero {
       background: linear-gradient(135deg, #3b82f6, #1d4ed8);
       color: white;
@@ -252,8 +252,9 @@
     .custom-modal-buttons button { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 14px; }
     .btn-modal-cancel { background: #334155; color: #cbd5e1; }
     .btn-modal-ok { background: #3b82f6; color: white; }
+    .btn-modal-danger { background: #ef4444; color: white; }
 
-    /* PANTALLA COMPLETA: CENTRO DE AYUDA */
+    /* CENTRO DE AYUDA EN PANTALLA COMPLETA */
     .help-page {
       display: none;
       position: fixed;
@@ -392,7 +393,7 @@
   <ul id="listaGastos"></ul>
 </div>
 
-<!-- NUEVO CENTRO DE AYUDA Y GUÍA COMPLETA -->
+<!-- CENTRO DE AYUDA Y GUÍA COMPLETA -->
 <div id="helpPage" class="help-page">
   <div class="help-header">
     <h2 style="margin:0;">📖 Centro de Ayuda</h2>
@@ -428,7 +429,7 @@
   </div>
 </div>
 
-<!-- MODAL PERSONALIZADO UNIVERSAL -->
+<!-- MODAL PERSONALIZADO ENTRADA DE TEXTO (PROMPT) -->
 <div id="customModal" class="custom-modal-bg">
   <div class="custom-modal-box">
     <h3 id="modalPromptTitulo">Título</h3>
@@ -437,6 +438,18 @@
     <div class="custom-modal-buttons">
       <button class="btn-modal-cancel" onclick="cerrarCustomModal(false)">Cancelar</button>
       <button class="btn-modal-ok" onclick="cerrarCustomModal(true)">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PERSONALIZADO DE CONFIRMACIÓN (CONFIRM) -->
+<div id="customConfirmModal" class="custom-modal-bg">
+  <div class="custom-modal-box">
+    <h3 id="confirmModalTitulo">Confirmar acción</h3>
+    <p id="confirmModalDesc">¿Estás seguro de realizar esta acción?</p>
+    <div class="custom-modal-buttons">
+      <button class="btn-modal-cancel" onclick="cerrarConfirmModal(false)">Cancelar</button>
+      <button class="btn-modal-danger" onclick="cerrarConfirmModal(true)">Eliminar</button>
     </div>
   </div>
 </div>
@@ -456,6 +469,7 @@
   let filtroPeriodo = 'todos'; 
   let deferredPrompt = null;
   let modalCallback = null;
+  let confirmCallback = null;
   const paletaColores = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316'];
 
   const form = document.getElementById('gastoForm');
@@ -463,7 +477,7 @@
   const selectCat = document.getElementById('categoria');
   const containerPeriodosSidebar = document.getElementById('listaPeriodosSidebar');
 
-  // CONTROL DEL CENTRO DE AYUDA EN PANTALLA COMPLETA
+  // CONTROL DEL CENTRO DE AYUDA
   function togglePaginaAyuda() {
     const page = document.getElementById('helpPage');
     page.style.display = page.style.display === 'block' ? 'none' : 'block';
@@ -489,6 +503,22 @@
       modalCallback(input.value);
     }
     modalCallback = null;
+  }
+
+  // MODAL CONFIRM CUSTOM (REEMPLAZA CONFIRM NATIVO)
+  function mostrarConfirmCustom(titulo, descripcion, callback) {
+    document.getElementById('confirmModalTitulo').innerText = titulo;
+    document.getElementById('confirmModalDesc').innerText = descripcion;
+    document.getElementById('customConfirmModal').style.display = 'flex';
+    confirmCallback = callback;
+  }
+
+  function cerrarConfirmModal(confirmado) {
+    document.getElementById('customConfirmModal').style.display = 'none';
+    if (confirmado && confirmCallback) {
+      confirmCallback();
+    }
+    confirmCallback = null;
   }
 
   document.getElementById('modalPromptInput').addEventListener('keydown', (e) => {
@@ -642,7 +672,7 @@
 
   function eliminarPeriodo(index) {
     const periodoActual = periodosGuardados[index];
-    if (confirm(`¿Deseas eliminar la sección "${periodoActual.nombre}" del menú?\n(Tus gastos guardados no se borrarán).`)) {
+    mostrarConfirmCustom('Eliminar Sección', `¿Deseas eliminar la sección "${periodoActual.nombre}" del menú?\n(Tus gastos guardados no se borrarán).`, () => {
       if (filtroPeriodo === periodoActual.key) {
         filtroPeriodo = 'todos';
         document.getElementById('filtroTitulo').innerText = 'Mostrando: Todos los gastos';
@@ -651,7 +681,7 @@
       localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
       renderizarPeriodosSidebar();
       actualizarVista();
-    }
+    });
   }
 
   function guardarYRenderear() {
@@ -817,10 +847,10 @@
   }
 
   function eliminarGasto(index) {
-    if (confirm('¿Seguro que deseas eliminar este registro?')) {
+    mostrarConfirmCustom('Eliminar Registro', '¿Seguro que deseas eliminar este gasto del historial?', () => {
       gastos.splice(index, 1);
       guardarYRenderear();
-    }
+    });
   }
 
   // EXPORTAR A EXCEL (CSV)
