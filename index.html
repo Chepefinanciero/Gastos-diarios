@@ -32,10 +32,23 @@
     h3 { color: #cbd5e1; font-size: 15px; margin-top: 20px; margin-bottom: 10px; }
     
     .header-app { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .header-buttons { display: flex; gap: 8px; align-items: center; }
+    .header-buttons { display: flex; gap: 6px; align-items: center; }
     
     .btn-icon { background: #334155; color: #cbd5e1; border: none; border-radius: 50%; width: 34px; height: 34px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
     .btn-icon:hover { background: #475569; }
+
+    /* SELECTOR DE MONEDA RÁPIDO */
+    .select-moneda {
+      background: #334155;
+      color: #38bdf8;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .select-moneda:focus { outline: none; border-color: #3b82f6; }
 
     /* BOTÓN DE AYUDA HERO */
     .btn-ayuda-hero {
@@ -226,7 +239,7 @@
 
     #filtroTitulo { font-size: 13px; color: #38bdf8; margin-bottom: 10px; font-weight: 500; }
 
-    /* MODAL PERSONALIZADO UNIVERSAL */
+    /* MODAL PERSONALIZADO ENTRADA DE TEXTO (PROMPT) */
     .custom-modal-bg {
       display: none;
       position: fixed;
@@ -331,6 +344,12 @@
       <h2>Control Express Pro</h2>
     </div>
     <div class="header-buttons">
+      <!-- SELECTOR DE MONEDA RÁPIDO -->
+      <select id="monedaSelect" class="select-moneda" onchange="cambiarMoneda(this.value)">
+        <option value="C$">C$ (NIO)</option>
+        <option value="$">$ (USD)</option>
+        <option value="€">€ (EUR)</option>
+      </select>
       <button class="btn-ayuda-hero" onclick="togglePaginaAyuda()">
         <span>?</span> Ayuda
       </button>
@@ -373,7 +392,7 @@
 
   <!-- FORMULARIO -->
   <form id="gastoForm">
-    <input type="number" step="0.01" id="monto" placeholder="Monto en Córdobas (C$)" required>
+    <input type="number" step="0.01" id="monto" placeholder="Monto" required>
     <select id="categoria" onchange="verificarNuevaCategoria(this)"></select>
     <select id="metodoPago">
       <option value="💵 Efectivo">💵 Efectivo</option>
@@ -403,28 +422,23 @@
   </div>
   <div class="help-content">
     <div class="help-card">
+      <h4>💱 Cambio de Moneda</h4>
+      <p>Puedes cambiar el símbolo de tu moneda (Córdobas <strong>C$</strong>, Dólares <strong>$</strong> o Euros <strong>€</strong>) directamente desde el selector ubicado en la esquina superior de la app.</p>
+    </div>
+
+    <div class="help-card">
       <h4>🎯 Presupuesto Mensual</h4>
-      <p>Abre el menú lateral (☰) y selecciona <strong>"Ajustar Presupuesto Mensual"</strong>. La barra superior cambiará de verde a amarillo y rojo según lo que hayas gastado, indicándote tu disponible en tiempo real.</p>
+      <p>Abre el menú lateral (☰) y selecciona <strong>"Ajustar Presupuesto Mensual"</strong>. La barra superior cambiará de color según lo que vayas consumiendo.</p>
     </div>
 
     <div class="help-card">
       <h4>💳 Registro y Métodos de Pago</h4>
-      <p>Ingresa el monto en córdobas (C$), elige la categoría y selecciona si pagaste con <strong>Efectivo</strong>, <strong>Tarjeta</strong> o <strong>Transferencia</strong> para mantener tus registros conciliados con tus cuentas.</p>
+      <p>Ingresa el monto, elige la categoría y clasifica si pagaste con <strong>Efectivo</strong>, <strong>Tarjeta</strong> o <strong>Transferencia</strong>.</p>
     </div>
 
     <div class="help-card">
-      <h4>📂 Categorías y Secciones Personalizadas</h4>
-      <p>Puedes agregar una nueva categoría seleccionando <strong>"➕ Agregar nueva categoría..."</strong> en el desplegable del formulario. Para carpetas de meses o proyectos, usa el botón <strong>"➕ Agregar Mes/Año"</strong> dentro del menú lateral.</p>
-    </div>
-
-    <div class="help-card">
-      <h4>📊 Gráfico de Distribución</h4>
-      <p>La barra de colores calcula automáticamente el porcentaje de tus fondos consumido por cada categoría para que identifiques de un vistazo en qué estás gastando más.</p>
-    </div>
-
-    <div class="help-card">
-      <h4>📊 Exportación e Importación de Datos</h4>
-      <p>Desde el menú lateral puedes descargar un archivo ejecutable para Excel (CSV) o guardar una <strong>Copia de Seguridad (JSON)</strong> para migrar tu información entre dispositivos de manera segura.</p>
+      <h4>📊 Exportación y Respaldos</h4>
+      <p>Exporta tu historial completo a Excel (CSV) o crea copias de seguridad (JSON) desde el menú lateral para mayor seguridad.</p>
     </div>
 
     <button onclick="togglePaginaAyuda()" style="width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">Volver a la App</button>
@@ -444,7 +458,7 @@
   </div>
 </div>
 
-<!-- MODAL PERSONALIZADO DE CONFIRMACIÓN / MENSAJES -->
+<!-- MODAL PERSONALIZADO DE CONFIRMACIÓN -->
 <div id="customConfirmModal" class="custom-modal-bg">
   <div class="custom-modal-box">
     <h3 id="confirmModalTitulo">Confirmar acción</h3>
@@ -467,6 +481,7 @@
   let categorias = JSON.parse(localStorage.getItem('mis_categorias')) || categoriasDefecto;
   let periodosGuardados = JSON.parse(localStorage.getItem('mis_periodos')) || [];
   let presupuestoMensual = parseFloat(localStorage.getItem('mi_presupuesto')) || 0;
+  let monedaActual = localStorage.getItem('mi_moneda') || 'C$';
   
   let filtroPeriodo = 'todos'; 
   let deferredPrompt = null;
@@ -478,8 +493,20 @@
   const lista = document.getElementById('listaGastos');
   const selectCat = document.getElementById('categoria');
   const containerPeriodosSidebar = document.getElementById('listaPeriodosSidebar');
+  const monedaSelect = document.getElementById('monedaSelect');
 
-  // DETECTAR SI LA APP YA ESTÁ INSTALADA Y EN EJECUCIÓN (PWA STANDALONE)
+  // Inicializar selector de moneda con el valor guardado
+  monedaSelect.value = monedaActual;
+  document.getElementById('monto').placeholder = `Monto en (${monedaActual})`;
+
+  function cambiarMoneda(nuevaMoneda) {
+    monedaActual = nuevaMoneda;
+    localStorage.setItem('mi_moneda', monedaActual);
+    document.getElementById('monto').placeholder = `Monto en (${monedaActual})`;
+    actualizarVista();
+  }
+
+  // DETECTAR MODO APP INSTALADA
   function verificarModoAppInstalada() {
     const esPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     if (esPWA) {
@@ -490,13 +517,11 @@
     }
   }
 
-  // CONTROL DEL CENTRO DE AYUDA
   function togglePaginaAyuda() {
     const page = document.getElementById('helpPage');
     page.style.display = page.style.display === 'block' ? 'none' : 'block';
   }
 
-  // MODAL PROMPT CUSTOM
   function mostrarPromptCustom(titulo, descripcion, valorInicial, tipoInput, callback) {
     document.getElementById('modalPromptTitulo').innerText = titulo;
     document.getElementById('modalPromptDesc').innerText = descripcion;
@@ -518,7 +543,6 @@
     modalCallback = null;
   }
 
-  // MODAL CONFIRM O ALERTA CUSTOM
   function mostrarConfirmCustom(titulo, descripcion, callback, esAlerta = false) {
     document.getElementById('confirmModalTitulo').innerText = titulo;
     document.getElementById('confirmModalDesc').innerText = descripcion;
@@ -554,11 +578,9 @@
     }
   });
 
-  // INSTALACIÓN PWA MEJORADA
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    // Mostrar banner solo si no estamos en modo standalone
     const esPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     if (!esPWA) {
       document.getElementById('bannerInstalar').style.display = 'flex';
@@ -567,12 +589,10 @@
 
   function ejecutarInstalacion() {
     const esPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    
     if (esPWA) {
-      mostrarConfirmCustom('Aplicación Instalada', '¡Ya estás usando Control Express Pro directamente como una aplicación en tu teléfono!', null, true);
+      mostrarConfirmCustom('Aplicación Instalada', '¡Ya estás usando Control Express Pro directamente como una aplicación!', null, true);
       return;
     }
-
     if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult) => {
@@ -582,11 +602,10 @@
         deferredPrompt = null;
       });
     } else {
-      mostrarConfirmCustom('Instalación en Tu Teléfono', 'Si estás en Chrome o Safari y ya la instalaste, busca el ícono de "Control Express Pro" en tu pantalla de inicio. Si aún no la has agregado, toca los tres puntos (⋮) en Chrome o "Compartir" en Safari y elige "Agregar a la pantalla de inicio".', null, true);
+      mostrarConfirmCustom('Instalación en Tu Teléfono', 'Agrega la app a tu pantalla de inicio desde el menú de tu navegador (Chrome o Safari).', null, true);
     }
   }
 
-  // CATEGORÍAS
   function renderizarCategoriasSelect() {
     selectCat.innerHTML = '';
     categorias.forEach(cat => {
@@ -622,11 +641,10 @@
     }
   }
 
-  // CONFIGURAR PRESUPUESTO
   function abrirModalPresupuesto() {
     toggleSidebar();
     const actual = presupuestoMensual > 0 ? presupuestoMensual : '';
-    mostrarPromptCustom('Presupuesto Mensual', 'Ingresa tu presupuesto total para este mes en C$:', actual, 'number', (valor) => {
+    mostrarPromptCustom('Presupuesto Mensual', `Ingresa tu presupuesto total en (${monedaActual}):`, actual, 'number', (valor) => {
       if (valor !== null && !isNaN(parseFloat(valor))) {
         presupuestoMensual = parseFloat(valor);
         localStorage.setItem('mi_presupuesto', presupuestoMensual);
@@ -635,7 +653,6 @@
     });
   }
 
-  // GESTIÓN DE PERIODOS EN BARRA LATERAL
   function renderizarPeriodosSidebar() {
     containerPeriodosSidebar.innerHTML = '';
     periodosGuardados.forEach((per, index) => {
@@ -723,7 +740,6 @@
     actualizarVista();
   }
 
-  // ACTUALIZACIÓN PRINCIPAL DE LA VISTA
   function actualizarVista() {
     lista.innerHTML = '';
     const hoyStr = new Date().toISOString().split('T')[0];
@@ -772,7 +788,7 @@
       const metodoStr = gasto.metodoPago ? ` • <small style="color:#a7f3d0">${gasto.metodoPago}</small>` : '';
       li.innerHTML = `
         <div>
-          <strong style="color: #f8fafc">${gasto.categoria}</strong> - <span style="color: #38bdf8">C$${gasto.monto.toFixed(2)}</span>${metodoStr}<br>
+          <strong style="color: #f8fafc">${gasto.categoria}</strong> - <span style="color: #38bdf8">${monedaActual}${gasto.monto.toFixed(2)}</span>${metodoStr}<br>
           <small style="color:#64748b">${new Date(gasto.fecha).toLocaleDateString()} ${new Date(gasto.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
         </div>
         <div class="item-actions">
@@ -783,20 +799,20 @@
       lista.appendChild(li);
     });
 
-    document.getElementById('totalHoy').innerText = `C$${hoyTotal.toFixed(2)}`;
-    document.getElementById('totalMes').innerText = `C$${mesTotal.toFixed(2)}`;
+    document.getElementById('totalHoy').innerText = `${monedaActual}${hoyTotal.toFixed(2)}`;
+    document.getElementById('totalMes').innerText = `${monedaActual}${mesTotal.toFixed(2)}`;
 
     actualizarBarraPresupuesto(mesTotal);
     actualizarGraficoCategorias(totalesPorCategoria);
   }
 
   function actualizarBarraPresupuesto(mesTotal) {
-    document.getElementById('presupuestoTextoTotal').innerText = `C$${presupuestoMensual.toFixed(2)}`;
-    document.getElementById('presupuestoGastado').innerText = `C$${mesTotal.toFixed(2)}`;
+    document.getElementById('presupuestoTextoTotal').innerText = `${monedaActual}${presupuestoMensual.toFixed(2)}`;
+    document.getElementById('presupuestoGastado').innerText = `${monedaActual}${mesTotal.toFixed(2)}`;
     
     const disponible = presupuestoMensual - mesTotal;
     const elemDisponible = document.getElementById('presupuestoDisponible');
-    elemDisponible.innerText = `C$${disponible.toFixed(2)}`;
+    elemDisponible.innerText = `${monedaActual}${disponible.toFixed(2)}`;
     
     if (disponible < 0) {
       elemDisponible.style.color = '#f87171';
@@ -844,7 +860,7 @@
       seg.className = 'chart-segment';
       seg.style.width = `${porcentaje}%`;
       seg.style.backgroundColor = color;
-      seg.title = `${cat}: C$${monto.toFixed(2)} (${porcentaje}%)`;
+      seg.title = `${cat}: ${monedaActual}${monto.toFixed(2)} (${porcentaje}%)`;
       chartBar.appendChild(seg);
 
       const leg = document.createElement('div');
@@ -856,7 +872,6 @@
     }
   }
 
-  // REGISTRAR GASTO
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const monto = parseFloat(document.getElementById('monto').value);
@@ -872,7 +887,7 @@
 
   function editarGasto(index) {
     const gastoActual = gastos[index];
-    mostrarPromptCustom('Modificar Gasto', `Modificar monto para "${gastoActual.categoria}":`, gastoActual.monto, 'number', (valor) => {
+    mostrarPromptCustom('Modificar Gasto', `Modificar monto (${monedaActual}) para "${gastoActual.categoria}":`, gastoActual.monto, 'number', (valor) => {
       if (valor !== null && !isNaN(parseFloat(valor)) && parseFloat(valor) > 0) {
         gastos[index].monto = parseFloat(valor);
         guardarYRenderear();
@@ -887,7 +902,6 @@
     });
   }
 
-  // EXPORTAR A EXCEL (CSV)
   function exportarExcel() {
     if (gastos.length === 0) {
       mostrarConfirmCustom('Sin Registros', 'No hay gastos guardados para exportar en este momento.', null, true);
@@ -895,7 +909,7 @@
     }
 
     let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-    csvContent += "Fecha,Hora,Categoría,Método de Pago,Monto (C$)\n";
+    csvContent += `Fecha,Hora,Categoría,Método de Pago,Monto (${monedaActual})\n`;
 
     gastos.forEach(g => {
       const fecha = new Date(g.fecha).toLocaleDateString();
@@ -913,13 +927,13 @@
     document.body.removeChild(link);
   }
 
-  // RESPALDO JSON
   function exportarRespaldoJSON() {
     const backup = {
       gastos,
       categorias,
       periodosGuardados,
-      presupuestoMensual
+      presupuestoMensual,
+      monedaActual
     };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup, null, 2));
     const downloadAnchor = document.createElement('a');
@@ -943,11 +957,16 @@
           categorias = importedData.categorias || categoriasDefecto;
           periodosGuardados = importedData.periodosGuardados || [];
           presupuestoMensual = importedData.presupuestoMensual || 0;
+          monedaActual = importedData.monedaActual || 'C$';
 
           localStorage.setItem('mis_gastos', JSON.stringify(gastos));
           localStorage.setItem('mis_categorias', JSON.stringify(categorias));
           localStorage.setItem('mis_periodos', JSON.stringify(periodosGuardados));
           localStorage.setItem('mi_presupuesto', presupuestoMensual);
+          localStorage.setItem('mi_moneda', monedaActual);
+
+          monedaSelect.value = monedaActual;
+          document.getElementById('monto').placeholder = `Monto en (${monedaActual})`;
 
           renderizarCategoriasSelect();
           renderizarPeriodosSidebar();
