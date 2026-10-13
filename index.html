@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Mi Control de Gastos Pro</title>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2459107757321233"
-     crossorigin="anonymous"></script>
   <link rel="manifest" href="manifest.json">
   <style>
     * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
@@ -321,7 +319,7 @@
   <input type="file" id="inputRestaurar" accept=".json" style="display: none;" onchange="importarRespaldoJSON(event)">
 
   <hr style="border: 0; border-top: 1px solid #334155; margin: 4px 0;">
-  <button class="sidebar-menu-btn" onclick="mostrarInstruccionesInstalacion()" style="background: #2563eb; color: white; text-align: center;">📲 Instalar en Celular / PC</button>
+  <button id="btnInstalarSidebar" class="sidebar-menu-btn" onclick="ejecutarInstalacion()" style="background: #2563eb; color: white; text-align: center;">📲 Instalar en Celular / PC</button>
 </div>
 
 <div class="app">
@@ -444,14 +442,14 @@
   </div>
 </div>
 
-<!-- MODAL PERSONALIZADO DE CONFIRMACIÓN (CONFIRM) -->
+<!-- MODAL PERSONALIZADO DE CONFIRMACIÓN / MENSAJES -->
 <div id="customConfirmModal" class="custom-modal-bg">
   <div class="custom-modal-box">
     <h3 id="confirmModalTitulo">Confirmar acción</h3>
     <p id="confirmModalDesc">¿Estás seguro de realizar esta acción?</p>
     <div class="custom-modal-buttons">
-      <button class="btn-modal-cancel" onclick="cerrarConfirmModal(false)">Cancelar</button>
-      <button class="btn-modal-danger" onclick="cerrarConfirmModal(true)">Eliminar</button>
+      <button id="btnConfirmCancel" class="btn-modal-cancel" onclick="cerrarConfirmModal(false)">Cancelar</button>
+      <button id="btnConfirmOk" class="btn-modal-danger" onclick="cerrarConfirmModal(true)">Eliminar</button>
     </div>
   </div>
 </div>
@@ -478,6 +476,17 @@
   const lista = document.getElementById('listaGastos');
   const selectCat = document.getElementById('categoria');
   const containerPeriodosSidebar = document.getElementById('listaPeriodosSidebar');
+
+  // DETECTAR SI LA APP YA ESTÁ INSTALADA Y EN EJECUCIÓN (PWA STANDALONE)
+  function verificarModoAppInstalada() {
+    const esPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (esPWA) {
+      const banner = document.getElementById('bannerInstalar');
+      const btnSidebar = document.getElementById('btnInstalarSidebar');
+      if (banner) banner.style.display = 'none';
+      if (btnSidebar) btnSidebar.style.display = 'none';
+    }
+  }
 
   // CONTROL DEL CENTRO DE AYUDA
   function togglePaginaAyuda() {
@@ -507,10 +516,24 @@
     modalCallback = null;
   }
 
-  // MODAL CONFIRM CUSTOM (REEMPLAZA CONFIRM NATIVO)
-  function mostrarConfirmCustom(titulo, descripcion, callback) {
+  // MODAL CONFIRM O ALERTA CUSTOM
+  function mostrarConfirmCustom(titulo, descripcion, callback, esAlerta = false) {
     document.getElementById('confirmModalTitulo').innerText = titulo;
     document.getElementById('confirmModalDesc').innerText = descripcion;
+    
+    const btnCancel = document.getElementById('btnConfirmCancel');
+    const btnOk = document.getElementById('btnConfirmOk');
+
+    if (esAlerta) {
+      btnCancel.style.display = 'none';
+      btnOk.innerText = 'Entendido';
+      btnOk.className = 'btn-modal-ok';
+    } else {
+      btnCancel.style.display = 'block';
+      btnOk.innerText = 'Eliminar';
+      btnOk.className = 'btn-modal-danger';
+    }
+
     document.getElementById('customConfirmModal').style.display = 'flex';
     confirmCallback = callback;
   }
@@ -529,14 +552,25 @@
     }
   });
 
-  // INSTALACIÓN PWA
+  // INSTALACIÓN PWA MEJORADA
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    document.getElementById('bannerInstalar').style.display = 'flex';
+    // Mostrar banner solo si no estamos en modo standalone
+    const esPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (!esPWA) {
+      document.getElementById('bannerInstalar').style.display = 'flex';
+    }
   });
 
   function ejecutarInstalacion() {
+    const esPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    
+    if (esPWA) {
+      mostrarConfirmCustom('Aplicación Instalada', '¡Ya estás usando Control Express Pro directamente como una aplicación en tu teléfono!', null, true);
+      return;
+    }
+
     if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult) => {
@@ -546,12 +580,8 @@
         deferredPrompt = null;
       });
     } else {
-      mostrarInstruccionesInstalacion();
+      mostrarConfirmCustom('Instalación en Tu Teléfono', 'Si estás en Chrome o Safari y ya la instalaste, busca el ícono de "Control Express Pro" en tu pantalla de inicio. Si aún no la has agregado, toca los tres puntos (⋮) en Chrome o "Compartir" en Safari y elige "Agregar a la pantalla de inicio".', null, true);
     }
-  }
-
-  function mostrarInstruccionesInstalacion() {
-    togglePaginaAyuda();
   }
 
   // CATEGORÍAS
@@ -858,7 +888,7 @@
   // EXPORTAR A EXCEL (CSV)
   function exportarExcel() {
     if (gastos.length === 0) {
-      alert('No hay gastos registrados para exportar.');
+      mostrarConfirmCustom('Sin Registros', 'No hay gastos guardados para exportar en este momento.', null, true);
       return;
     }
 
@@ -920,10 +950,10 @@
           renderizarCategoriasSelect();
           renderizarPeriodosSidebar();
           actualizarVista();
-          alert('¡Respaldo restaurado con éxito!');
+          mostrarConfirmCustom('Respaldo Restaurado', '¡Tu historial y configuraciones han sido cargados con éxito!', null, true);
         }
       } catch (err) {
-        alert('Error al leer el archivo de respaldo.');
+        mostrarConfirmCustom('Error de Archivo', 'No se pudo leer el archivo de respaldo seleccionado.', null, true);
       }
     };
     reader.readAsText(file);
@@ -945,6 +975,8 @@
     actualizarVista();
   }
 
+  // Inicializar
+  verificarModoAppInstalada();
   renderizarCategoriasSelect();
   renderizarPeriodosSidebar();
   actualizarVista();
